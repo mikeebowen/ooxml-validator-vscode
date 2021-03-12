@@ -1,0 +1,112 @@
+{
+  "name": "ooxml-validator-vscode",
+  "displayName": "ooxml-validator-vscode",
+  "description": "A VS Code extension to validate Open Office XML files (.docx, .xlsx, and .pptx)",
+  "version": "0.0.1",
+  "publisher": "mikeebowen",
+  "homepage": "https://github.com/mikeebowen/ooxml-validator-vscode/blob/master/README.md",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mikeebowen/ooxml-validator-vscode.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mikeebowen/ooxml-validator-vscode/issues"
+  },
+  "engines": {
+    "vscode": "^1.54.0"
+  },
+  "keywords": [
+    "ooxml"
+  ],
+  "categories": [
+    "Other",
+    "Testing"
+  ],
+  "activationEvents": [
+    "onCommand:ooxml-validator-vscode.validateOOXML"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "OOXML",
+      "properties": {
+        "ooxml.fileFormatVersion": {
+          "type": "number",
+          "description": "Specifies the version of Office to use to validate OOXML files."
+        },
+        "ooxml.outPutFilePath": {
+          "type": "string",
+          "description": "Specifies the absolute path to write the output of the validator. Path MUST be absolute"
+        },
+        "ooxml.outPutFileType": {
+          "type": "string",
+          "default": "csv",
+          "description": "Specifies the type of file to output the errors to. MUST be \"csv\" or \"json\", default is \"csc\""
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "ooxml-validator-vscode.validateOOXML",
+        "title": "Validate OOXML",
+        "when": "resourceLangId == ooxml",
+        "icon": {
+          "dark": "./assets/clipboard-check-solid-dark.svg",
+          "light": "./assets/clipboard-check-solid-light.svg"
+        }
+      }
+    ],
+    "languages": [
+      {
+        "id": "ooxml",
+        "extensions": [
+          ".docx",
+          ".pptx",
+          ".xlsx"
+        ]
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "when": "resourceLangId == ooxml",
+          "command": "ooxml-validator-vscode.validateOOXML",
+          "title": "Validate OOXML",
+          "group": "3_compare"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "test-compile": "tsc -p ./",
+    "test-watch": "tsc -watch -p ./",
+    "pretest": "npm run test-compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/glob": "^7.1.3",
+    "@types/mocha": "^8.0.4",
+    "@types/node": "^12.11.7",
+    "@types/vscode": "^1.54.0",
+    "@typescript-eslint/eslint-plugin": "^4.14.1",
+    "@typescript-eslint/parser": "^4.14.1",
+    "eslint": "^7.21.0",
+    "glob": "^7.1.6",
+    "mocha": "^8.2.1",
+    "prettier": "^2.2.1",
+    "prettier-eslint": "^12.0.0",
+    "ts-loader": "^8.0.14",
+    "typescript": "^4.1.3",
+    "vscode-test": "^1.5.0",
+    "webpack": "^5.19.0",
+    "webpack-cli": "^4.4.0"
+  },
+  "dependencies": {
+    "csv-writer": "^1.6.0"
+  }
+}
