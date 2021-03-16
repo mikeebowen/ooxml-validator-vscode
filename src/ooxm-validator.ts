@@ -117,7 +117,7 @@ export default class OOXMLValidator {
               await window.showErrorMessage('OOXML Validator\nooxml.outPutFilePath must be an absolute path');
             }
           }
-          content = getWebviewContent(validationErrors, basename(file.fsPath));
+          content = getWebviewContent(validationErrors, basename(file.fsPath), path);
           panel.webview.html = content;
         } else {
           content = getWebviewContent([], basename(file.fsPath));
@@ -130,7 +130,7 @@ export default class OOXMLValidator {
     });
   };
 }
-function getWebviewContent(validationErrors?: ValidationError[], fileName?: string): string {
+function getWebviewContent(validationErrors?: ValidationError[], fileName?: string, path?: string): string {
   if (validationErrors && validationErrors.length) {
     let list = '';
     validationErrors.forEach(err => {
@@ -165,14 +165,30 @@ function getWebviewContent(validationErrors?: ValidationError[], fileName?: stri
           <title>OOXML Validation Errors</title>
           <body>
             <div class="container-fluid pt-3 ol-3">
-            <p>
-              <button class="btn btn-warn" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
-                View Errors
-              </button>
-            </p>
-            <div class="collapse" id="collapseExample">
-              <div class="card card-body">
-                ${list}
+            <div class="row pb-3">
+              <div class="col">
+                <h1>There Were ${validationErrors.length} Validation Errors Found</h1>
+${
+  path
+    ? `<h2>A log of these errors was saved as "${path}"</h2>`
+    : '<h2>No log of these errors was saved.</h2><h3>Set "ooxml.outPutFilePath" in settings.json to save a log (csv or json) of the errors</h3>'
+}
+              </div>
+            </div>
+            <div class="row pb-3">
+              <div class="col">
+                <button class="btn btn-warn" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+                  View Errors
+                </button>
+              </div>
+            </div>
+            <div class="row pb-3">
+              <div class="col">
+                <div class="collapse" id="collapseExample">
+                  <div class="card card-body">
+                    ${list}
+                  </div>
+                </div>
               </div>
             </div>
           </body>
