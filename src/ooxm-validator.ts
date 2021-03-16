@@ -20,20 +20,16 @@ interface IValidationError {
 class ValidationError {
   Description?: string;
   NamespacesDefinitions?: string[];
-  private _Namespaces: any;
+  Namespaces: any;
   XPath?: string;
   PartUri?: string;
   Id?: string;
   ErrorType?: number;
 
-  get Namespaces() {
-    return JSON.stringify(this._Namespaces).toString();
-  }
-
   constructor(options: IValidationError) {
     this.Id = options.Id;
     this.Description = options.Description;
-    this._Namespaces = options.Path?.Namespaces;
+    this.Namespaces = options.Path?.Namespaces;
     this.NamespacesDefinitions = options.Path?.NamespacesDefinitions;
     this.XPath = options.Path?.XPath;
     this.PartUri = options.Path?.PartUri;
@@ -105,7 +101,17 @@ export default class OOXMLValidator {
                   path: fixedPath,
                   header: Object.keys(validationErrors[0]).map(e => new Header({ id: e, title: e })),
                 });
-                await csvWriter.writeRecords(validationErrors);
+                const errorsForCsv = validationErrors.map((ve: ValidationError) => {
+                  const copy = Object.assign({}, ve);
+                  for (const [key, value] of Object.entries(copy)) {
+                    const k = key as 'Id' | 'Description' | 'Namespaces' | 'NamespacesDefinitions' | 'XPath' | 'PartUri' | 'ErrorType';
+                    if (typeof copy[k] === 'object') {
+                    }
+                    copy[k] = JSON.stringify(value);
+                  }
+                  return copy;
+                });
+                await csvWriter.writeRecords(errorsForCsv);
               }
             } else {
               await window.showErrorMessage('OOXML Validator\nooxml.outPutFilePath must be an absolute path');
@@ -187,8 +193,8 @@ function getWebviewContent(validationErrors?: ValidationError[], fileName?: stri
             <div class="row">
               <div class="col">
               <div class="jumbotron">
-              <h1 class="display-4">${fileName} Is Valid!!</h1>
-              <p class="lead">OOXML Validator did not find any validation errors in ${fileName}.</p>
+              <h1 class="display-4 text-center">No Open Office XML Validation Errors Found!!</h1>
+              <p class="lead text-center">OOXML Validator did not find any validation errors in ${fileName}.</p>
             </div>
               </div>
             </div>
