@@ -1,6 +1,5 @@
 # Set the default behavior, in case users don't have core.autocrlf set
 * text=auto
-
 # Files that should always be normalized and converted to native line
 # endings on checkout.
 *.js text
@@ -9,7 +8,6 @@
 *.md text
 *.yml text
 LICENSE text
-
 # Files that are truly binary and should not be modified
 *.png binary
 *.jpg binary
@@ -18,3 +16,4 @@ LICENSE text
 *.jar binary
 *.zip binary
 *.psd binary
+.exe filter=lfs diff=lfs merge=lfs -text
