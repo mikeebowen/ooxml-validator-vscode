@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { Uri, ViewColumn, WebviewPanel, window, workspace } from 'vscode';
-import { spawn } from 'child_process';
+import { spawn, ChildProcessWithoutNullStreams } from 'child_process';
 import { join, dirname, basename, isAbsolute, normalize, extname } from 'path';
 import { createObjectCsvWriter } from 'csv-writer';
 import { TextEncoder } from 'util';
@@ -296,7 +296,18 @@ export default class OOXMLValidator {
     const versions = Object.keys(formatVersions);
     // Default to the latest format version
     const version = versionStr && versions.includes(versionStr) ? versionStr : formatVersions[versions[versions.length - 1]];
-    const child = spawn(join(__dirname, '..', 'bin', 'OOXMLValidatorCLI.exe'), [file.fsPath, formatVersions[version]]);
+    let child: ChildProcessWithoutNullStreams;
+    switch (process.platform) {
+      case 'win32':
+        child = spawn(join(__dirname, '..', 'bin', 'windows', 'OOXMLValidatorCLI.exe'), [file.fsPath, formatVersions[version]]);
+        break;
+      case 'linux':
+        child = spawn(join(__dirname, '..', 'bin', 'linux', 'OOXMLValidatorCLI'), [file.fsPath, formatVersions[version]]);
+        break;
+      default:
+        child = spawn(join(__dirname, '..', 'bin', 'unix', 'OOXMLValidatorCLI'), [file.fsPath, formatVersions[version]]);
+        break;
+    }
     child.stdout.on('data', data => {
       json += data;
     });
