@@ -16,4 +16,4 @@ LICENSE text
 *.jar binary
 *.zip binary
 *.psd binary
-.exe filter=lfs diff=lfs merge=lfs -text
+bin/**/* filter=lfs diff=lfs merge=lfs -text
