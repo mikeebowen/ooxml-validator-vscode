@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { Uri, ViewColumn, WebviewPanel, window, workspace } from 'vscode';
-import { spawn, ChildProcessWithoutNullStreams } from 'child_process';
+import { spawn, exec, ChildProcessWithoutNullStreams } from 'child_process';
 import { join, dirname, basename, isAbsolute, normalize, extname } from 'path';
 import { createObjectCsvWriter } from 'csv-writer';
 import { TextEncoder } from 'util';
@@ -302,10 +302,14 @@ export default class OOXMLValidator {
         child = spawn(join(__dirname, '..', 'bin', 'windows', 'OOXMLValidatorCLI.exe'), [file.fsPath, formatVersions[version]]);
         break;
       case 'linux':
-        child = spawn(join(__dirname, '..', 'bin', 'linux', 'OOXMLValidatorCLI'), [file.fsPath, formatVersions[version]]);
+        const validatorLnx = join(__dirname, '..', 'bin', 'unix', 'OOXMLValidatorCLI');
+        exec(`chmod +x ${validatorLnx}`);
+        child = spawn(validatorLnx, [file.fsPath, formatVersions[version]]);
         break;
       default:
-        child = spawn(join(__dirname, '..', 'bin', 'unix', 'OOXMLValidatorCLI'), [file.fsPath, formatVersions[version]]);
+        const validatorUnx = join(__dirname, '..', 'bin', 'unix', 'OOXMLValidatorCLI');
+        exec(`chmod +x ${validatorUnx}`);
+        child = spawn(validatorUnx, [file.fsPath, formatVersions[version]]);
         break;
     }
     child.stdout.on('data', data => {
@@ -317,9 +321,9 @@ export default class OOXMLValidator {
     });
 
     child.on('close', async code => {
-      const validationErrors: ValidationError[] = JSON.parse(json).map((j: IValidationError) => new ValidationError(j));
-      let content: string;
       try {
+        const validationErrors: ValidationError[] = JSON.parse(json).map((j: IValidationError) => new ValidationError(j));
+        let content: string;
         if (err && err.length) {
           await window.showErrorMessage(err, { modal: true });
           panel.dispose();
@@ -334,8 +338,8 @@ export default class OOXMLValidator {
           content = OOXMLValidator.getWebviewContent([], basename(file.fsPath));
           panel.webview.html = content;
         }
-      } catch (err) {
-        await window.showErrorMessage(err.message || err, { modal: true });
+      } catch (error) {
+        await window.showErrorMessage(error.message || error, { modal: true });
         panel.dispose();
       }
     });
