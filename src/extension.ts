@@ -1,5 +1,5 @@
 import { commands, ExtensionContext } from 'vscode';
-import OOXMLValidator from './ooxm-validator';
+import OOXMLValidator from './ooxml-validator';
 
 export function activate(context: ExtensionContext) {
   const validateOOXML = commands.registerCommand('ooxml-validator-vscode.validateOOXML', file => OOXMLValidator.validate(file));
