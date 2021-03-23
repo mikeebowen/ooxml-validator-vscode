@@ -17,7 +17,7 @@ interface IValidationError {
   ErrorType?: number
 }
 
-class ValidationError {
+export class ValidationError {
   Description?: string;
   NamespacesDefinitions?: string[];
   Namespaces: any;
