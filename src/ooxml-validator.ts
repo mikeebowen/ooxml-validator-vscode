@@ -2,7 +2,7 @@
 import { Uri, ViewColumn, WebviewPanel, window, workspace } from 'vscode';
 import { spawn, exec, ChildProcessWithoutNullStreams } from 'child_process';
 import { join, dirname, basename, isAbsolute, normalize, extname } from 'path';
-import { createObjectCsvWriter } from 'csv-writer';
+const { createObjectCsvWriter } = require('csv-writer');
 import { TextEncoder } from 'util';
 
 interface IValidationError {
@@ -50,16 +50,21 @@ class Header {
     this.title = options.title;
   }
 }
+// wrapping fs functions, because workspace.fs methods can't be stubbed for testing
+export const effEss = {
+  createDirectory: workspace.fs.createDirectory,
+  writeFile: workspace.fs.writeFile,
+};
 
 export default class OOXMLValidator {
   static createLogFile = async (validationErrors: ValidationError[], path: string): Promise<void> => {
     const normalizedPath = normalize(path);
     if (isAbsolute(normalizedPath)) {
-      await workspace.fs.createDirectory(Uri.file(dirname(normalizedPath)));
+      await effEss.createDirectory(Uri.file(dirname(normalizedPath)));
       const ext = extname(basename(normalizedPath));
       if (ext === '.json') {
         const encoder = new TextEncoder();
-        await workspace.fs.writeFile(Uri.file(normalizedPath), encoder.encode(JSON.stringify(validationErrors)));
+        await effEss.writeFile(Uri.file(normalizedPath), encoder.encode(JSON.stringify(validationErrors)));
       } else {
         const fixedPath = ext === '.csv' ? normalizedPath : `${normalizedPath}.csv`;
         const csvWriter = createObjectCsvWriter({
