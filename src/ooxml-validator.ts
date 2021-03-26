@@ -2,7 +2,7 @@
 import { Uri, ViewColumn, WebviewPanel, window, workspace } from 'vscode';
 import { spawn, exec, ChildProcessWithoutNullStreams } from 'child_process';
 import { join, dirname, basename, isAbsolute, normalize, extname } from 'path';
-const { createObjectCsvWriter } = require('csv-writer');
+import { createObjectCsvWriter } from 'csv-writer';
 import { TextEncoder } from 'util';
 
 interface IValidationError {
