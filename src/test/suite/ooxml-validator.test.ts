@@ -1,9 +1,9 @@
-import { Uri, window, workspace } from 'vscode';
+import { Uri, WebviewPanel, window, workspace, WorkspaceConfiguration } from 'vscode';
 import { SinonStub, spy, stub } from 'sinon';
 import { expect } from 'chai';
 import * as path from 'path';
 import OOXMLValidator, { ValidationError, effEss } from '../../ooxml-validator';
-import { normalize } from 'path';
+import { join, normalize, basename } from 'path';
 import { TextEncoder } from 'util';
 import * as csvWriter from 'csv-writer';
 import { isEqual } from 'lodash';
@@ -11,7 +11,6 @@ import * as child_process from 'child_process';
 
 suite('OOXMLValidator', function () {
   this.timeout(15000);
-  const ooxmlValidator = new OOXMLValidator();
   const stubs: SinonStub[] = [];
 
   suite('createLogFile', function () {
@@ -103,12 +102,6 @@ suite('OOXMLValidator', function () {
           );
           return {
             stdout: {
-              // on(arg1: string, callback: any) {
-              //   expect(arg1).to.eq('data');
-              //   expect(typeof callback).to.eq('function');
-              //   // eslint-disable-next-line @typescript-eslint/naming-convention
-              //   callback(JSON.stringify({ Id: '1', Description: 'A test description' }));
-              // },
               on() {
                 return null;
               },
@@ -193,6 +186,247 @@ suite('OOXMLValidator', function () {
         'file not made executable for Unix',
       );
       done();
+    });
+
+    test('should catch any errors', async function () {
+      const showErrorMessageStub = stub(window, 'showErrorMessage');
+      const errorMsg = 'I am out of tacos';
+      const spawnStub = stub(child_process, 'spawn').callsFake(
+        (command: string, args: readonly string[], options: child_process.SpawnOptions): any => {
+          return {
+            stdout: {
+              on() {
+                return JSON.stringify({});
+              },
+            },
+            stderr: {
+              on() {
+                return null;
+              },
+            },
+            on: stub().throws({ message: errorMsg }),
+          };
+        },
+      );
+      const execStub = stub(child_process, 'exec');
+      stubs.push(spawnStub, execStub, showErrorMessageStub);
+      OOXMLValidator.validate(Uri.file(__filename));
+      expect(showErrorMessageStub.args[0][0]).to.eq(errorMsg);
+    });
+
+    test('should display the error modal if child.stderr returns an error', async function () {
+      const disposeSpy = spy();
+      const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns(({
+        webview: { html: '' },
+        dispose: disposeSpy,
+      } as unknown) as WebviewPanel);
+      const showErrorMessageStub = stub(window, 'showErrorMessage');
+      const errorMsg = 'I ate too much ice cream';
+      const spawnStub = stub(child_process, 'spawn').callsFake(
+        (command: string, args: readonly string[], options: child_process.SpawnOptions): any => {
+          return {
+            stdout: {
+              on(event: string, callback: any) {
+                callback(JSON.stringify([]));
+              },
+            },
+            stderr: {
+              on(event: string, callback: any) {
+                callback(errorMsg);
+              },
+            },
+            on(event: string, callback: any) {
+              callback();
+            },
+          };
+        },
+      );
+      const execStub = stub(child_process, 'exec');
+      stubs.push(spawnStub, execStub, showErrorMessageStub, createWebviewPanelStub);
+      OOXMLValidator.validate(Uri.file(__filename));
+      expect(showErrorMessageStub.args[0][0]).to.eq(errorMsg);
+      expect(createWebviewPanelStub.callCount).to.eq(1);
+    });
+
+    test('should display the error html and create a file if path exists', async function () {
+      const disposeSpy = spy();
+      const webviewMock = { html: '' };
+      const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns(({
+        webview: webviewMock,
+        dispose: disposeSpy,
+      } as unknown) as WebviewPanel);
+      const testPath = join('c', 'my-test-path');
+      const getConfigurationStub = stub(workspace, 'getConfiguration').returns(({
+        get() {
+          return testPath;
+        },
+      } as unknown) as WorkspaceConfiguration);
+      const createLogFileStub = stub(OOXMLValidator, 'createLogFile');
+      const helloWorld = 'hello world';
+      const showErrorMessageStub = stub(window, 'showErrorMessage');
+      const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(helloWorld);
+      const validationErrors = [
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        new ValidationError({ Id: '1', Description: 'another test description' }),
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        new ValidationError({ Id: '2', Description: 'another test description 2' }),
+      ];
+      const spawnStub = stub(child_process, 'spawn').callsFake(
+        (command: string, args: readonly string[], options: child_process.SpawnOptions): any => {
+          return {
+            stdout: {
+              on(event: string, callback: any) {
+                callback(JSON.stringify(validationErrors));
+              },
+            },
+            stderr: {
+              on(event: string, callback: any) {
+                callback('');
+              },
+            },
+            on(event: string, callback: any) {
+              callback();
+            },
+          };
+        },
+      );
+      const execStub = stub(child_process, 'exec');
+      stubs.push(
+        spawnStub,
+        execStub,
+        getConfigurationStub,
+        createWebviewPanelStub,
+        createLogFileStub,
+        getWebviewContentStub,
+        showErrorMessageStub,
+      );
+      OOXMLValidator.validate(Uri.file(__filename));
+      expect(createLogFileStub.args[0][0]).to.deep.eq(validationErrors);
+      expect(createLogFileStub.args[0][1]).to.eq(testPath);
+      expect(getWebviewContentStub.args[1][0]).to.deep.eq(validationErrors);
+      expect(getWebviewContentStub.args[1][1]).to.eq(basename(__filename));
+      expect(getWebviewContentStub.args[1][2]).to.eq(testPath);
+      expect(webviewMock.html).to.eq(helloWorld);
+      expect(showErrorMessageStub.callCount).to.eq(0);
+      expect(disposeSpy.callCount).to.eq(0);
+    });
+
+    test('should display the error html and not create a file if path does not exists', async function () {
+      const disposeSpy = spy();
+      const webviewMock = { html: '' };
+      const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns(({
+        webview: webviewMock,
+        dispose: disposeSpy,
+      } as unknown) as WebviewPanel);
+      const testPath = '';
+      const getConfigurationStub = stub(workspace, 'getConfiguration').returns(({
+        get() {
+          return testPath;
+        },
+      } as unknown) as WorkspaceConfiguration);
+      const createLogFileStub = stub(OOXMLValidator, 'createLogFile');
+      const helloWorld = 'hello world';
+      const showErrorMessageStub = stub(window, 'showErrorMessage');
+      const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(helloWorld);
+      const validationErrors = [
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        new ValidationError({ Id: '1', Description: 'another test description' }),
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        new ValidationError({ Id: '2', Description: 'another test description 2' }),
+      ];
+      const spawnStub = stub(child_process, 'spawn').callsFake(
+        (command: string, args: readonly string[], options: child_process.SpawnOptions): any => {
+          return {
+            stdout: {
+              on(event: string, callback: any) {
+                callback(JSON.stringify(validationErrors));
+              },
+            },
+            stderr: {
+              on(event: string, callback: any) {
+                callback('');
+              },
+            },
+            on(event: string, callback: any) {
+              callback();
+            },
+          };
+        },
+      );
+      const execStub = stub(child_process, 'exec');
+      stubs.push(
+        spawnStub,
+        execStub,
+        getConfigurationStub,
+        createWebviewPanelStub,
+        createLogFileStub,
+        getWebviewContentStub,
+        showErrorMessageStub,
+      );
+      OOXMLValidator.validate(Uri.file(__filename));
+      expect(createLogFileStub.callCount).to.eq(0);
+      expect(getWebviewContentStub.args[1][0]).to.deep.eq(validationErrors);
+      expect(getWebviewContentStub.args[1][1]).to.eq(basename(__filename));
+      expect(getWebviewContentStub.args[1][2]).to.eq(testPath);
+      expect(webviewMock.html).to.eq(helloWorld);
+      expect(showErrorMessageStub.callCount).to.eq(0);
+      expect(disposeSpy.callCount).to.eq(0);
+    });
+
+    test('should display the no errors html if no errors are found', async function () {
+      const disposeSpy = spy();
+      const webviewMock = { html: '' };
+      const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns(({
+        webview: webviewMock,
+        dispose: disposeSpy,
+      } as unknown) as WebviewPanel);
+      const getConfigurationStub = stub(workspace, 'getConfiguration').returns(({
+        get() {
+          return undefined;
+        },
+      } as unknown) as WorkspaceConfiguration);
+      const createLogFileStub = stub(OOXMLValidator, 'createLogFile');
+      const helloWorld = 'hello world';
+      const showErrorMessageStub = stub(window, 'showErrorMessage');
+      const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(helloWorld);
+      const validationErrors: ValidationError[] = [];
+      const spawnStub = stub(child_process, 'spawn').callsFake(
+        (command: string, args: readonly string[], options: child_process.SpawnOptions): any => {
+          return {
+            stdout: {
+              on(event: string, callback: any) {
+                callback(JSON.stringify(validationErrors));
+              },
+            },
+            stderr: {
+              on(event: string, callback: any) {
+                callback('');
+              },
+            },
+            on(event: string, callback: any) {
+              callback();
+            },
+          };
+        },
+      );
+      const execStub = stub(child_process, 'exec');
+      stubs.push(
+        spawnStub,
+        execStub,
+        getConfigurationStub,
+        createWebviewPanelStub,
+        createLogFileStub,
+        getWebviewContentStub,
+        showErrorMessageStub,
+      );
+      OOXMLValidator.validate(Uri.file(__filename));
+      expect(createLogFileStub.callCount).to.eq(0);
+      expect(getWebviewContentStub.args[1][0]).to.deep.eq(validationErrors);
+      expect(getWebviewContentStub.args[1][1]).to.eq(basename(__filename));
+      expect(getWebviewContentStub.args[1][2]).to.be.undefined;
+      expect(webviewMock.html).to.eq(helloWorld);
+      expect(showErrorMessageStub.callCount).to.eq(0);
+      expect(disposeSpy.callCount).to.eq(0);
     });
   });
 
