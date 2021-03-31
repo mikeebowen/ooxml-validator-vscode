@@ -2,7 +2,7 @@ sudo: false
 
 os:
   - osx
-  - linux
+  - windows
 language: node_js
 node_js:
   - 14
