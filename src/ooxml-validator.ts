@@ -3,6 +3,7 @@ import { Uri, ViewColumn, WebviewPanel, window, workspace } from 'vscode';
 import { join, dirname, basename, isAbsolute, normalize, extname } from 'path';
 import { existsSync, promises as fsp } from 'fs';
 import * as axios from 'axios';
+process.env.EDGE_USE_CORECLR = '1';
 const edge = require('electron-edge-js');
 import { createObjectCsvWriter } from 'csv-writer';
 import { TextEncoder } from 'util';
@@ -287,89 +288,112 @@ export default class OOXMLValidator {
   }
 
   static validate = async (file: Uri) => {
-    // try {
-    const panel: WebviewPanel = window.createWebviewPanel('validateOOXML', 'OOXML Validate', ViewColumn.One, { enableScripts: true });
-    panel.webview.html = OOXMLValidator.getWebviewContent();
-    const formatVersions: any = {
-      '2007': '0',
-      '2010': '1',
-      '2013': '2',
-      '2016': '3',
-      '2019': '4',
-    };
-    const configVersion: number | undefined = workspace.getConfiguration('ooxml').get('fileFormatVersion');
-    const json = '';
-    const err = '';
-    const versionStr = configVersion?.toString();
-    const versions = Object.keys(formatVersions);
-    // Default to the latest format version
-    const version = versionStr && versions.includes(versionStr) ? versionStr : formatVersions[versions[versions.length - 1]];
-    if (existsSync(file.fsPath)) {
-      const fileData = await fsp.readFile(file.fsPath);
+    try {
+      const panel: WebviewPanel = window.createWebviewPanel('validateOOXML', 'OOXML Validate', ViewColumn.One, { enableScripts: true });
+      panel.webview.html = OOXMLValidator.getWebviewContent();
+      const formatVersions: any = {
+        '2007': '0',
+        '2010': '1',
+        '2013': '2',
+        '2016': '3',
+        '2019': '4',
+      };
+      const configVersion: number | undefined = workspace.getConfiguration('ooxml').get('fileFormatVersion');
+      const json = '';
+      const err = '';
+      const versionStr = configVersion?.toString();
+      const versions = Object.keys(formatVersions);
+      // Default to the latest format version
+      const version = versionStr && versions.includes(versionStr) ? versionStr : formatVersions[versions[versions.length - 1]];
+      // const fileData = await fsp.readFile(file.fsPath);
+      console.log('%c%s', 'color: #21c229', join(__dirname, '..', 'bin', 'Test.Edge.dll'));
+      const helloWorld = edge.func({
+        source() {
+          /*
+            using System;
+            using System.Threading.Tasks;
+
+            public class Startup
+            {
+                public async Task<object> Invoke(object input)
+                {
+                    return await Task.FromResult("Hello " + input.ToString());
+                }
+            }
+
+
+          */
+        },
+        // assemblyFile: join(__dirname, '..', 'bin', 'Test.Edge.dll'),
+        // references: [join(__dirname, '..', 'bin', 'DocumentFormat.OpenXml.dll')],
+        // references: [join(__dirname, '..', 'bin', 'Test.Edge.dll'), join(__dirname, '..', 'bin', 'DocumentFormat.OpenXml.dll')],
+      });
+
+      // const clrMethod = edge.func('Test.Edge.dll');
+
+      //   clrMethod('clrMethod', function (error: any, result: any) {
+      //     if (error) {
+      //       throw error;
+      //     }
+      //     window.showInformationMessage(result, { modal: true });
+      //   });
+
+      helloWorld(file.fsPath, function (error: any, result: any) {
+        if (error) {
+          throw error;
+        }
+        window.showInformationMessage(result, { modal: true });
+      });
+
+      // let child: ChildProcessWithoutNullStreams;
+      //     switch (process.platform) {
+      //       case 'win32':
+      //         child = spawn(join(__dirname, '..', 'bin', 'windows', 'OOXMLValidatorCLI.exe'), [file.fsPath, formatVersions[version]]);
+      //         break;
+      //       case 'linux':
+      //         const validatorLnx = join(__dirname, '..', 'bin', 'linux', 'OOXMLValidatorCLI');
+      //         exec(`chmod +x ${validatorLnx}`);
+      //         child = spawn(validatorLnx, [file.fsPath, formatVersions[version]]);
+      //         break;
+      //       default:
+      //         const validatorUnx = join(__dirname, '..', 'bin', 'unix', 'OOXMLValidatorCLI');
+      //         exec(`chmod +x ${validatorUnx}`);
+      //         child = spawn(validatorUnx, [file.fsPath, formatVersions[version]]);
+      //         break;
+      //     }
+      //     child.stdout.on('data', data => {
+      //       json += data;
+      //     });
+
+      //     child.stderr.on('data', data => {
+      //       err += data;
+      //     });
+
+      //     child.on('close', async code => {
+      //       try {
+      //         const validationErrors: ValidationError[] = JSON.parse(json).map((j: IValidationError) => new ValidationError(j));
+      //         let content: string;
+      //         if (err && err.length) {
+      //           await window.showErrorMessage(err, { modal: true });
+      //           panel.dispose();
+      //         } else if (validationErrors.length) {
+      //           const path: string | undefined = workspace.getConfiguration('ooxml').get('outPutFilePath');
+      //           if (path) {
+      //             OOXMLValidator.createLogFile(validationErrors, path);
+      //           }
+      //           content = OOXMLValidator.getWebviewContent(validationErrors, basename(file.fsPath), path);
+      //           panel.webview.html = content;
+      //         } else {
+      //           content = OOXMLValidator.getWebviewContent([], basename(file.fsPath));
+      //           panel.webview.html = content;
+      //         }
+      //       } catch (error) {
+      //         await window.showErrorMessage(error.message || error, { modal: true });
+      //         panel.dispose();
+      //       }
+      //     });
+    } catch (error) {
+      await window.showErrorMessage(error.message || error, { modal: true });
     }
-    const helloWorld = edge.func(function () {
-      /*
-      async (input) => {
-          return ".NET Welcomes " + input.ToString();
-      }
-    */
-    });
-    helloWorld('JavaScript', function (error: any, result: any) {
-      if (error) {
-        throw error;
-      }
-      window.showInformationMessage(result, { modal: true });
-    });
-
-    // let child: ChildProcessWithoutNullStreams;
-    //     switch (process.platform) {
-    //       case 'win32':
-    //         child = spawn(join(__dirname, '..', 'bin', 'windows', 'OOXMLValidatorCLI.exe'), [file.fsPath, formatVersions[version]]);
-    //         break;
-    //       case 'linux':
-    //         const validatorLnx = join(__dirname, '..', 'bin', 'linux', 'OOXMLValidatorCLI');
-    //         exec(`chmod +x ${validatorLnx}`);
-    //         child = spawn(validatorLnx, [file.fsPath, formatVersions[version]]);
-    //         break;
-    //       default:
-    //         const validatorUnx = join(__dirname, '..', 'bin', 'unix', 'OOXMLValidatorCLI');
-    //         exec(`chmod +x ${validatorUnx}`);
-    //         child = spawn(validatorUnx, [file.fsPath, formatVersions[version]]);
-    //         break;
-    //     }
-    //     child.stdout.on('data', data => {
-    //       json += data;
-    //     });
-
-    //     child.stderr.on('data', data => {
-    //       err += data;
-    //     });
-
-    //     child.on('close', async code => {
-    //       try {
-    //         const validationErrors: ValidationError[] = JSON.parse(json).map((j: IValidationError) => new ValidationError(j));
-    //         let content: string;
-    //         if (err && err.length) {
-    //           await window.showErrorMessage(err, { modal: true });
-    //           panel.dispose();
-    //         } else if (validationErrors.length) {
-    //           const path: string | undefined = workspace.getConfiguration('ooxml').get('outPutFilePath');
-    //           if (path) {
-    //             OOXMLValidator.createLogFile(validationErrors, path);
-    //           }
-    //           content = OOXMLValidator.getWebviewContent(validationErrors, basename(file.fsPath), path);
-    //           panel.webview.html = content;
-    //         } else {
-    //           content = OOXMLValidator.getWebviewContent([], basename(file.fsPath));
-    //           panel.webview.html = content;
-    //         }
-    //       } catch (error) {
-    //         await window.showErrorMessage(error.message || error, { modal: true });
-    //         panel.dispose();
-    //       }
-    //     });
-    //   } catch (error) {
-    //     await window.showErrorMessage(error.message || error, { modal: true });
-    //   }
   };
 }
