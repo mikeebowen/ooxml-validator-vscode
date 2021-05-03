@@ -329,21 +329,21 @@ export default class OOXMLValidator {
         // references: [join(__dirname, '..', 'bin', 'Test.Edge.dll'), join(__dirname, '..', 'bin', 'DocumentFormat.OpenXml.dll')],
       });
 
-      // const clrMethod = edge.func('Test.Edge.dll');
+      const clrMethod = edge.func(join(__dirname, '..', 'bin', 'Test.Edge.dll'));
 
-      //   clrMethod('clrMethod', function (error: any, result: any) {
-      //     if (error) {
-      //       throw error;
-      //     }
-      //     window.showInformationMessage(result, { modal: true });
-      //   });
-
-      helloWorld(file.fsPath, function (error: any, result: any) {
+      clrMethod('clrMethod', function (error: any, result: any) {
         if (error) {
           throw error;
         }
         window.showInformationMessage(result, { modal: true });
       });
+
+      // helloWorld(file.fsPath, function (error: any, result: any) {
+      //   if (error) {
+      //     throw error;
+      //   }
+      //   window.showInformationMessage(result, { modal: true });
+      // });
 
       // let child: ChildProcessWithoutNullStreams;
       //     switch (process.platform) {
