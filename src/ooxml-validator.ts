@@ -288,8 +288,8 @@ export default class OOXMLValidator {
   }
 
   static validate = async (file: Uri) => {
+    const panel: WebviewPanel = window.createWebviewPanel('validateOOXML', 'OOXML Validate', ViewColumn.One, { enableScripts: true });
     try {
-      const panel: WebviewPanel = window.createWebviewPanel('validateOOXML', 'OOXML Validate', ViewColumn.One, { enableScripts: true });
       panel.webview.html = OOXMLValidator.getWebviewContent();
       const formatVersions: any = {
         '2007': '0',
@@ -329,14 +329,21 @@ export default class OOXMLValidator {
         // references: [join(__dirname, '..', 'bin', 'Test.Edge.dll'), join(__dirname, '..', 'bin', 'DocumentFormat.OpenXml.dll')],
       });
 
-      const clrMethod = edge.func(join(__dirname, '..', 'bin', 'Test.Edge.dll'));
-
-      clrMethod('clrMethod', function (error: any, result: any) {
-        if (error) {
-          throw error;
-        }
-        window.showInformationMessage(result, { modal: true });
+      const clrMethod = edge.func({
+        assemblyFile: join(__dirname, '..', 'bin', 'OOXML.Validator.dll'),
+        references: [join(__dirname, '..', 'bin', 'System.IO.Packaging.dll'), join(__dirname, '..', 'bin', 'DocumentFormat.OpenXml.dll')],
       });
+      // const clrMethod = edge.func(join(__dirname, '..', 'bin', 'OOXML.Validator.dll'));
+
+      clrMethod(
+        JSON.stringify({ fileName: file.fsPath, format: formatVersions[version] || formatVersions[versions[versions.length - 1]] }),
+        function (error: any, result: any) {
+          if (error) {
+            throw error;
+          }
+          window.showInformationMessage(result, { modal: true });
+        },
+      );
 
       // helloWorld(file.fsPath, function (error: any, result: any) {
       //   if (error) {
@@ -393,6 +400,7 @@ export default class OOXMLValidator {
       //       }
       //     });
     } catch (error) {
+      panel.dispose();
       await window.showErrorMessage(error.message || error, { modal: true });
     }
   };
