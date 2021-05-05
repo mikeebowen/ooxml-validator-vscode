@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { Uri, ViewColumn, WebviewPanel, window, workspace } from 'vscode';
 import { join, dirname, basename, isAbsolute, normalize, extname } from 'path';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+const execPromise = promisify(exec);
 process.env.EDGE_USE_CORECLR = '1';
 const edge = require('electron-edge-js');
 import { createObjectCsvWriter } from 'csv-writer';
@@ -91,7 +94,7 @@ export default class OOXMLValidator {
     }
   };
 
-  static getWebviewContent(validationErrors?: ValidationError[], fileName?: string, path?: string): string {
+  static getWebviewContent = (validationErrors?: ValidationError[], fileName?: string, path?: string): string => {
     if (validationErrors && validationErrors.length) {
       let list = '';
       validationErrors.forEach(err => {
@@ -130,10 +133,10 @@ export default class OOXMLValidator {
                 <div class="col">
                   <h1>There Were ${validationErrors.length} Validation Errors Found</h1>
   ${
-  path
-    ? `<h2>A log of these errors was saved as "${path}"</h2>`
-    : '<h2>No log of these errors was saved.</h2><h3>Set "ooxml.outPutFilePath" in settings.json to save a log (csv or json) of the errors</h3>'
-}
+    path
+      ? `<h2>A log of these errors was saved as "${path}"</h2>`
+      : '<h2>No log of these errors was saved.</h2><h3>Set "ooxml.outPutFilePath" in settings.json to save a log (csv or json) of the errors</h3>'
+  }
                 </div>
               </div>
               <div class="row pb-3">
@@ -285,10 +288,27 @@ export default class OOXMLValidator {
           </div>
             </body>
             </html>`;
-  }
+  };
 
   static validate = async (file: Uri) => {
     const panel: WebviewPanel = window.createWebviewPanel('validateOOXML', 'OOXML Validate', ViewColumn.One, { enableScripts: true });
+    try {
+      const { stdout, stderr } = await execPromise('dotnet --list-runtimes');
+      if (stderr) {
+        throw stderr;
+      } else {
+        if (!stdout.includes('NETCore.App 5.')) {
+          await window.showErrorMessage(
+            'OOXML Validator requires .Net 5 be installed.\nYou can download it from "https://dotnet.microsoft.com/download/dotnet"',
+            { modal: true },
+          );
+          return;
+        }
+      }
+    } catch (error) {
+      await window.showErrorMessage(error.message || error, { modal: true });
+      return;
+    }
     try {
       panel.webview.html = OOXMLValidator.getWebviewContent();
       const formatVersions: any = {
@@ -302,30 +322,28 @@ export default class OOXMLValidator {
       const versionStr = configVersion?.toString();
       const versions = Object.keys(formatVersions);
       // Default to the latest format version
-      const version = versionStr && versions.includes(versionStr) ? versionStr : formatVersions[versions[versions.length - 1]];
+      const version =
+        versionStr && versions.includes(versionStr) ? formatVersions[versionStr] : formatVersions[versions[versions.length - 1]];
       const validateOOXML = edge.func(join(__dirname, '..', 'bin', 'OOXML.Validator.dll'));
 
-      validateOOXML(
-        JSON.stringify({ fileName: file.fsPath, format: formatVersions[version] || formatVersions[versions[versions.length - 1]] }),
-        function (error: any, result: any) {
-          if (error) {
-            throw error;
+      validateOOXML(JSON.stringify({ fileName: file.fsPath, format: version }), (error: any, result: any) => {
+        if (error) {
+          throw error;
+        }
+        const validationErrors: ValidationError[] = JSON.parse(result).$values.map((r: IValidationError) => new ValidationError(r));
+        let content: string;
+        if (validationErrors.length) {
+          const path: string | undefined = workspace.getConfiguration('ooxml').get('outPutFilePath');
+          if (path) {
+            OOXMLValidator.createLogFile(validationErrors, path);
           }
-          const validationErrors: ValidationError[] = JSON.parse(result).$values.map((r: IValidationError) => new ValidationError(r));
-          let content: string;
-          if (validationErrors.length) {
-            const path: string | undefined = workspace.getConfiguration('ooxml').get('outPutFilePath');
-            if (path) {
-              OOXMLValidator.createLogFile(validationErrors, path);
-            }
-            content = OOXMLValidator.getWebviewContent(validationErrors, basename(file.fsPath), path);
-            panel.webview.html = content;
-          } else {
-            content = OOXMLValidator.getWebviewContent([], basename(file.fsPath));
-            panel.webview.html = content;
-          }
-        },
-      );
+          content = OOXMLValidator.getWebviewContent(validationErrors, basename(file.fsPath), path);
+          panel.webview.html = content;
+        } else {
+          content = OOXMLValidator.getWebviewContent([], basename(file.fsPath));
+          panel.webview.html = content;
+        }
+      });
     } catch (error) {
       panel.dispose();
       await window.showErrorMessage(error.message || error, { modal: true });
