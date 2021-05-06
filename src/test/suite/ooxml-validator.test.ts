@@ -1,13 +1,15 @@
-import { Uri, WebviewPanel, window, workspace, WorkspaceConfiguration } from 'vscode';
-import { SinonStub, spy, stub } from 'sinon';
+/* eslint-disable @typescript-eslint/naming-convention */
+import { Uri, ViewColumn, WebviewPanel, window, workspace, WorkspaceConfiguration } from 'vscode';
+import { SinonStub, spy, stub, fake } from 'sinon';
 import { expect } from 'chai';
 import * as path from 'path';
-import OOXMLValidator, { ValidationError, effEss } from '../../ooxml-validator';
-import { join, normalize, basename } from 'path';
+import OOXMLValidator, { ValidationError, effEss, childProcess } from '../../ooxml-validator';
+import { basename, normalize } from 'path';
 import { TextEncoder } from 'util';
 import * as csvWriter from 'csv-writer';
 import { isEqual } from 'lodash';
-import * as child_process from 'child_process';
+import { PromiseWithChild } from 'child_process';
+const edge = require('electron-edge-js');
 
 suite('OOXMLValidator', function () {
   this.timeout(15000);
@@ -61,9 +63,7 @@ suite('OOXMLValidator', function () {
   suite('getWebViewContent', function () {
     test('should return the errors in html if there are validation errors', function (done) {
       const validationErrors = [
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         new ValidationError({ Id: '1', Description: 'the first test error' }),
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         new ValidationError({ Id: '2', Description: 'the second test error' }),
       ];
       const testHtml =
@@ -92,342 +92,401 @@ suite('OOXMLValidator', function () {
   });
 
   suite('validate', function () {
-    test('should call the windows executable if process.platform is "win32"', function (done) {
-      const processStub = stub(process, 'platform').value('win32');
-      const spawnStub = stub(child_process, 'spawn').callsFake(
-        (command: string, args: readonly string[], options: child_process.SpawnOptions): any => {
-          expect(command.includes('OOXMLValidatorCLI.exe') && command.includes('windows')).to.eq(
-            true,
-            "command.includes('OOXMLValidatorCLI.exe')",
-          );
-          return {
-            stdout: {
-              on() {
-                return null;
-              },
-            },
-            stderr: {
-              on() {
-                return null;
-              },
-            },
-            on() {
-              return null;
-            },
-          };
-        },
+    test('should show error modal if exec returns an error', async function () {
+      const execStub = stub(childProcess, 'execPromise').returns(
+        Promise.resolve({ stdout: null, stderr: 'Out of coffee' }) as PromiseWithChild<any>,
       );
-      stubs.push(spawnStub, processStub);
-      OOXMLValidator.validate(Uri.file(__filename));
-      done();
-    });
-
-    test('should call the linux executable if process.platform is "linux"', function (done) {
-      const processStub = stub(process, 'platform').value('linux');
-      const spawnStub = stub(child_process, 'spawn').callsFake(
-        (command: string, args: readonly string[], options: child_process.SpawnOptions): any => {
-          expect(!command.includes('.exe') && command.includes('linux')).to.eq(true, "!command.includes('.exe')");
-          expect(command.includes('OOXMLValidatorCLI')).to.eq(true, "command.includes('OOXMLValidatorCLI')");
-          return {
-            stdout: {
-              on() {
-                return null;
-              },
-            },
-            stderr: {
-              on() {
-                return null;
-              },
-            },
-            on() {
-              return null;
-            },
-          };
-        },
-      );
-      const execStub = stub(child_process, 'exec');
-      stubs.push(spawnStub, execStub, processStub);
-      OOXMLValidator.validate(Uri.file(__filename));
-      expect(execStub.args[0][0].includes('chmod +x') && execStub.args[0][0].includes('OOXMLValidatorCLI')).to.eq(
-        true,
-        'file not made executable for linux',
-      );
-      done();
-    });
-
-    test('should call the Unix executable if process.platform is anything else', function (done) {
-      const processStub = stub(process, 'platform').value('tacocat');
-      const spawnStub = stub(child_process, 'spawn').callsFake(
-        (command: string, args: readonly string[], options: child_process.SpawnOptions): any => {
-          expect(!command.includes('.exe') && command.includes('unix')).to.eq(true, "!command.includes('.exe')");
-          expect(command.includes('OOXMLValidatorCLI')).to.eq(true, "command.includes('OOXMLValidatorCLI')");
-          return {
-            stdout: {
-              on() {
-                return null;
-              },
-            },
-            stderr: {
-              on() {
-                return null;
-              },
-            },
-            on() {
-              return null;
-            },
-          };
-        },
-      );
-      const execStub = stub(child_process, 'exec');
-      stubs.push(spawnStub, execStub, processStub);
-      OOXMLValidator.validate(Uri.file(__filename));
-      expect(execStub.args[0][0].includes('chmod +x') && execStub.args[0][0].includes('OOXMLValidatorCLI')).to.eq(
-        true,
-        'file not made executable for Unix',
-      );
-      done();
-    });
-
-    test('should catch any errors', async function () {
       const showErrorMessageStub = stub(window, 'showErrorMessage');
-      const errorMsg = 'I am out of tacos';
-      const spawnStub = stub(child_process, 'spawn').callsFake(
-        (command: string, args: readonly string[], options: child_process.SpawnOptions): any => {
-          return {
-            stdout: {
-              on() {
-                return JSON.stringify({});
-              },
-            },
-            stderr: {
-              on() {
-                return null;
-              },
-            },
-            on: stub().throws({ message: errorMsg }),
-          };
-        },
-      );
-      const execStub = stub(child_process, 'exec');
-      stubs.push(spawnStub, execStub, showErrorMessageStub);
-      OOXMLValidator.validate(Uri.file(__filename));
-      expect(showErrorMessageStub.args[0][0]).to.eq(errorMsg);
+      await OOXMLValidator.validate(Uri.file(__filename));
+      expect(execStub.firstCall.firstArg).to.eq('dotnet --list-runtimes');
+      expect(showErrorMessageStub.firstCall.firstArg).to.eq('Out of coffee');
+      stubs.push(execStub, showErrorMessageStub);
     });
 
-    test('should display the error modal if child.stderr returns an error', async function () {
+    test('should show an error modal if .Net Core 5 is not installed', async function () {
+      const execStub = stub(childProcess, 'execPromise').returns(
+        Promise.resolve({ stdout: 'Coffee! Coffee! Coffee!', stderr: null }) as PromiseWithChild<any>,
+      );
+      const showErrorMessageStub = stub(window, 'showErrorMessage');
+      await OOXMLValidator.validate(Uri.file(__filename));
+      expect(showErrorMessageStub.firstCall.firstArg).to.eq(
+        'OOXML Validator requires .Net 5 be installed.\nYou can download it from "https://dotnet.microsoft.com/download/dotnet"',
+      );
+      expect(showErrorMessageStub.firstCall.args[1]).to.deep.eq({ modal: true });
+      stubs.push(execStub, showErrorMessageStub);
+    });
+
+    test('should show an error modal if the edge callback is called with an error', async function () {
+      const execStub = stub(childProcess, 'execPromise').returns(
+        Promise.resolve({ stdout: 'NETCore.App 5.', stderr: null }) as PromiseWithChild<any>,
+      );
+      const showErrorMessageStub = stub(window, 'showErrorMessage');
+      const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns('<span>hello world</span>');
       const disposeSpy = spy();
       const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns(({
         webview: { html: '' },
         dispose: disposeSpy,
       } as unknown) as WebviewPanel);
-      const showErrorMessageStub = stub(window, 'showErrorMessage');
-      const errorMsg = 'I ate too much ice cream';
-      const spawnStub = stub(child_process, 'spawn').callsFake(
-        (command: string, args: readonly string[], options: child_process.SpawnOptions): any => {
-          return {
-            stdout: {
-              on(event: string, callback: any) {
-                callback(JSON.stringify([]));
-              },
-            },
-            stderr: {
-              on(event: string, callback: any) {
-                callback(errorMsg);
-              },
-            },
-            on(event: string, callback: any) {
-              callback();
-            },
-          };
-        },
-      );
-      const execStub = stub(child_process, 'exec');
-      stubs.push(spawnStub, execStub, showErrorMessageStub, createWebviewPanelStub);
-      OOXMLValidator.validate(Uri.file(__filename));
-      expect(showErrorMessageStub.args[0][0]).to.eq(errorMsg);
-      expect(createWebviewPanelStub.callCount).to.eq(1);
+      const getFake = fake.returns(undefined);
+      const getConfigurationStub = stub(workspace, 'getConfiguration').returns(({ get: getFake } as unknown) as WorkspaceConfiguration);
+      const file = Uri.file(__filename);
+      const edgeStub = stub(edge, 'func').returns(function (data: any, callback: any) {
+        expect(data).to.deep.eq(JSON.stringify({ fileName: file.fsPath, format: '4' }));
+        callback('Need to walk the dog', null);
+      });
+
+      await OOXMLValidator.validate(file);
+      expect(createWebviewPanelStub.firstCall.firstArg).to.eq('validateOOXML');
+      expect(createWebviewPanelStub.firstCall.args[1]).to.eq('OOXML Validate');
+      expect(createWebviewPanelStub.firstCall.args[2]).to.deep.eq(ViewColumn.One);
+      expect(createWebviewPanelStub.firstCall.args[3]).to.deep.eq({ enableScripts: true });
+      expect(disposeSpy.called).to.eq(true, 'panel.dispose() should have been called');
+      expect(getFake.getCall(0).args[0]).to.eq('fileFormatVersion');
+      expect(showErrorMessageStub.firstCall.firstArg).to.eq('Need to walk the dog');
+      expect(showErrorMessageStub.firstCall.args[1]).to.deep.eq({ modal: true });
+      stubs.push(execStub, showErrorMessageStub, getWebviewContentStub, createWebviewPanelStub, edgeStub, getConfigurationStub);
     });
 
-    test('should display the error html and create a file if path exists', async function () {
-      const disposeSpy = spy();
-      const webviewMock = { html: '' };
-      const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns(({
-        webview: webviewMock,
-        dispose: disposeSpy,
-      } as unknown) as WebviewPanel);
-      const testPath = join('c', 'my-test-path');
-      const getConfigurationStub = stub(workspace, 'getConfiguration').returns(({
-        get() {
-          return testPath;
-        },
-      } as unknown) as WorkspaceConfiguration);
-      const createLogFileStub = stub(OOXMLValidator, 'createLogFile');
-      const helloWorld = 'hello world';
+    test('should show validation errors in the web view and use a different version of Office if one is assigned', async function () {
+      const sdkValidationErrors = {
+        $id: '1',
+        $values: [
+          {
+            $id: '2023',
+            Id: 'Sch_UnexpectedElementContentExpectingComplex',
+            ErrorType: 0,
+            Description:
+              'The element has unexpected child element u0027http://schemas.openxmlformats.org/drawingml/2006/chart:showDLblsOverMaxu0027.',
+            Path: {
+              $id: '2024',
+              NamespacesDefinitions: {
+                $id: '2025',
+                $values: ['xmlns:c=u0022http://schemas.openxmlformats.org/drawingml/2006/chartu0022'],
+              },
+              Namespaces: {
+                $id: '2026',
+              },
+              XPath: '/c:chartSpace[1]/c:chart[1]',
+              PartUri: '/word/charts/chart1.xml',
+            },
+            Node: {
+              $ref: '1252',
+            },
+            Part: {
+              $ref: '1242',
+            },
+            RelatedNode: {
+              $ref: '1588',
+            },
+            RelatedPart: null,
+          },
+          {
+            $id: '2027',
+            Id: 'Sch_UnexpectedElementContentExpectingComplex',
+            ErrorType: 0,
+            Description:
+              'The element has unexpected child element u0027http://schemas.microsoft.com/office/drawing/2012/chart:leaderLinesu0027.',
+            Path: {
+              $id: '2028',
+              NamespacesDefinitions: {
+                $id: '2029',
+                $values: ['xmlns:c=u0022http://schemas.openxmlformats.org/drawingml/2006/chartu0022'],
+              },
+              Namespaces: {
+                $id: '2030',
+              },
+              XPath: '/c:chartSpace[1]/c:chart[1]/c:plotArea[1]/c:scatterChart[1]/c:ser[2]/c:dLbls[1]/c:extLst[1]/c:ext[1]',
+              PartUri: '/word/charts/chart1.xml',
+            },
+            Node: {
+              $ref: '1425',
+            },
+            Part: {
+              $ref: '1242',
+            },
+            RelatedNode: {
+              $ref: '1427',
+            },
+            RelatedPart: null,
+          },
+          {
+            $id: '2031',
+            Id: 'Sch_UnexpectedElementContentExpectingComplex',
+            ErrorType: 0,
+            Description:
+              'The element has unexpected child element u0027http://schemas.microsoft.com/office/drawing/2012/chart:leaderLinesu0027.',
+            Path: {
+              $id: '2032',
+              NamespacesDefinitions: {
+                $id: '2033',
+                $values: ['xmlns:c=u0022http://schemas.openxmlformats.org/drawingml/2006/chartu0022'],
+              },
+              Namespaces: {
+                $id: '2034',
+              },
+              XPath: '/c:chartSpace[1]/c:chart[1]/c:plotArea[1]/c:scatterChart[1]/c:ser[1]/c:dLbls[1]/c:extLst[1]/c:ext[1]',
+              PartUri: '/word/charts/chart1.xml',
+            },
+            Node: {
+              $ref: '1320',
+            },
+            Part: {
+              $ref: '1242',
+            },
+            RelatedNode: {
+              $ref: '1322',
+            },
+            RelatedPart: null,
+          },
+        ],
+      };
+      const validationErrors = sdkValidationErrors.$values.map((v: any) => new ValidationError(v));
+      const testHtml = '<span>hello world</span>';
+      const execStub = stub(childProcess, 'execPromise').returns(
+        Promise.resolve({ stdout: 'NETCore.App 5.', stderr: null }) as PromiseWithChild<any>,
+      );
       const showErrorMessageStub = stub(window, 'showErrorMessage');
-      const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(helloWorld);
-      const validationErrors = [
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        new ValidationError({ Id: '1', Description: 'another test description' }),
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        new ValidationError({ Id: '2', Description: 'another test description 2' }),
-      ];
-      const spawnStub = stub(child_process, 'spawn').callsFake(
-        (command: string, args: readonly string[], options: child_process.SpawnOptions): any => {
-          return {
-            stdout: {
-              on(event: string, callback: any) {
-                callback(JSON.stringify(validationErrors));
-              },
-            },
-            stderr: {
-              on(event: string, callback: any) {
-                callback('');
-              },
-            },
-            on(event: string, callback: any) {
-              callback();
-            },
-          };
-        },
-      );
-      const execStub = stub(child_process, 'exec');
-      stubs.push(
-        spawnStub,
-        execStub,
-        getConfigurationStub,
-        createWebviewPanelStub,
-        createLogFileStub,
-        getWebviewContentStub,
-        showErrorMessageStub,
-      );
-      OOXMLValidator.validate(Uri.file(__filename));
-      expect(createLogFileStub.args[0][0]).to.deep.eq(validationErrors);
-      expect(createLogFileStub.args[0][1]).to.eq(testPath);
-      expect(getWebviewContentStub.args[1][0]).to.deep.eq(validationErrors);
-      expect(getWebviewContentStub.args[1][1]).to.eq(basename(__filename));
-      expect(getWebviewContentStub.args[1][2]).to.eq(testPath);
-      expect(webviewMock.html).to.eq(helloWorld);
-      expect(showErrorMessageStub.callCount).to.eq(0);
-      expect(disposeSpy.callCount).to.eq(0);
-    });
-
-    test('should display the error html and not create a file if path does not exists', async function () {
+      const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
       const disposeSpy = spy();
-      const webviewMock = { html: '' };
+      const webview = { html: '' };
       const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns(({
-        webview: webviewMock,
-        dispose: disposeSpy,
-      } as unknown) as WebviewPanel);
-      const testPath = '';
-      const getConfigurationStub = stub(workspace, 'getConfiguration').returns(({
-        get() {
-          return testPath;
-        },
-      } as unknown) as WorkspaceConfiguration);
-      const createLogFileStub = stub(OOXMLValidator, 'createLogFile');
-      const helloWorld = 'hello world';
-      const showErrorMessageStub = stub(window, 'showErrorMessage');
-      const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(helloWorld);
-      const validationErrors = [
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        new ValidationError({ Id: '1', Description: 'another test description' }),
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        new ValidationError({ Id: '2', Description: 'another test description 2' }),
-      ];
-      const spawnStub = stub(child_process, 'spawn').callsFake(
-        (command: string, args: readonly string[], options: child_process.SpawnOptions): any => {
-          return {
-            stdout: {
-              on(event: string, callback: any) {
-                callback(JSON.stringify(validationErrors));
-              },
-            },
-            stderr: {
-              on(event: string, callback: any) {
-                callback('');
-              },
-            },
-            on(event: string, callback: any) {
-              callback();
-            },
-          };
-        },
-      );
-      const execStub = stub(child_process, 'exec');
-      stubs.push(
-        spawnStub,
-        execStub,
-        getConfigurationStub,
-        createWebviewPanelStub,
-        createLogFileStub,
-        getWebviewContentStub,
-        showErrorMessageStub,
-      );
-      OOXMLValidator.validate(Uri.file(__filename));
-      expect(createLogFileStub.callCount).to.eq(0);
-      expect(getWebviewContentStub.args[1][0]).to.deep.eq(validationErrors);
-      expect(getWebviewContentStub.args[1][1]).to.eq(basename(__filename));
-      expect(getWebviewContentStub.args[1][2]).to.eq(testPath);
-      expect(webviewMock.html).to.eq(helloWorld);
-      expect(showErrorMessageStub.callCount).to.eq(0);
-      expect(disposeSpy.callCount).to.eq(0);
-    });
-
-    test('should display the no errors html if no errors are found', async function () {
-      const disposeSpy = spy();
-      const webviewMock = { html: '' };
-      const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns(({
-        webview: webviewMock,
+        webview,
         dispose: disposeSpy,
       } as unknown) as WebviewPanel);
       const getConfigurationStub = stub(workspace, 'getConfiguration').returns(({
-        get() {
-          return undefined;
+        get(key: string) {
+          switch (key) {
+            case 'fileFormatVersion':
+              return '2010';
+              break;
+            case 'outPutFilePath':
+              return undefined;
+            default:
+              break;
+          }
         },
       } as unknown) as WorkspaceConfiguration);
-      const createLogFileStub = stub(OOXMLValidator, 'createLogFile');
-      const helloWorld = 'hello world';
-      const showErrorMessageStub = stub(window, 'showErrorMessage');
-      const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(helloWorld);
-      const validationErrors: ValidationError[] = [];
-      const spawnStub = stub(child_process, 'spawn').callsFake(
-        (command: string, args: readonly string[], options: child_process.SpawnOptions): any => {
-          return {
-            stdout: {
-              on(event: string, callback: any) {
-                callback(JSON.stringify(validationErrors));
-              },
-            },
-            stderr: {
-              on(event: string, callback: any) {
-                callback('');
-              },
-            },
-            on(event: string, callback: any) {
-              callback();
-            },
-          };
-        },
-      );
-      const execStub = stub(child_process, 'exec');
-      stubs.push(
-        spawnStub,
-        execStub,
-        getConfigurationStub,
-        createWebviewPanelStub,
-        createLogFileStub,
-        getWebviewContentStub,
-        showErrorMessageStub,
-      );
-      OOXMLValidator.validate(Uri.file(__filename));
-      expect(createLogFileStub.callCount).to.eq(0);
-      expect(getWebviewContentStub.args[1][0]).to.deep.eq(validationErrors);
-      expect(getWebviewContentStub.args[1][1]).to.eq(basename(__filename));
-      expect(getWebviewContentStub.args[1][2]).to.be.undefined;
-      expect(webviewMock.html).to.eq(helloWorld);
+      const file = Uri.file(__filename);
+      const edgeStub = stub(edge, 'func').returns(function (data: any, callback: any) {
+        expect(data).to.deep.eq(JSON.stringify({ fileName: file.fsPath, format: '1' }));
+        callback(null, JSON.stringify(sdkValidationErrors));
+      });
+      //OOXMLValidator.getWebviewContent(validationErrors, basename(file.fsPath), path)
+      await OOXMLValidator.validate(file);
+      expect(createWebviewPanelStub.firstCall.firstArg).to.eq('validateOOXML');
+      expect(createWebviewPanelStub.firstCall.args[1]).to.eq('OOXML Validate');
+      expect(createWebviewPanelStub.firstCall.args[2]).to.deep.eq(ViewColumn.One);
+      expect(createWebviewPanelStub.firstCall.args[3]).to.deep.eq({ enableScripts: true });
+      expect(disposeSpy.called).to.eq(false, 'panel.dispose() should not have been called');
+      // expect(getFake.getCall(0).args[1]).to.eq('outPutFilePath');
       expect(showErrorMessageStub.callCount).to.eq(0);
-      expect(disposeSpy.callCount).to.eq(0);
+      expect(getWebviewContentStub.getCall(1).firstArg).to.deep.eq(validationErrors);
+      expect(getWebviewContentStub.getCall(1).args[1]).to.eq(basename(file.fsPath));
+      expect(getWebviewContentStub.getCall(1).args[2]).to.be.undefined;
+      expect(webview.html).to.eq(testHtml);
+      stubs.push(execStub, showErrorMessageStub, getWebviewContentStub, createWebviewPanelStub, edgeStub, getConfigurationStub);
     });
+
+    // eslint-disable-next-line max-len
+    test('should show validation errors in the web view, create a file with the contents and use a different version of Office if one is assigned', async function () {
+      const sdkValidationErrors = {
+        $id: '1',
+        $values: [
+          {
+            $id: '2023',
+            Id: 'Sch_UnexpectedElementContentExpectingComplex',
+            ErrorType: 0,
+            Description:
+              'The element has unexpected child element u0027http://schemas.openxmlformats.org/drawingml/2006/chart:showDLblsOverMaxu0027.',
+            Path: {
+              $id: '2024',
+              NamespacesDefinitions: {
+                $id: '2025',
+                $values: ['xmlns:c=u0022http://schemas.openxmlformats.org/drawingml/2006/chartu0022'],
+              },
+              Namespaces: {
+                $id: '2026',
+              },
+              XPath: '/c:chartSpace[1]/c:chart[1]',
+              PartUri: '/word/charts/chart1.xml',
+            },
+            Node: {
+              $ref: '1252',
+            },
+            Part: {
+              $ref: '1242',
+            },
+            RelatedNode: {
+              $ref: '1588',
+            },
+            RelatedPart: null,
+          },
+          {
+            $id: '2027',
+            Id: 'Sch_UnexpectedElementContentExpectingComplex',
+            ErrorType: 0,
+            Description:
+              'The element has unexpected child element u0027http://schemas.microsoft.com/office/drawing/2012/chart:leaderLinesu0027.',
+            Path: {
+              $id: '2028',
+              NamespacesDefinitions: {
+                $id: '2029',
+                $values: ['xmlns:c=u0022http://schemas.openxmlformats.org/drawingml/2006/chartu0022'],
+              },
+              Namespaces: {
+                $id: '2030',
+              },
+              XPath: '/c:chartSpace[1]/c:chart[1]/c:plotArea[1]/c:scatterChart[1]/c:ser[2]/c:dLbls[1]/c:extLst[1]/c:ext[1]',
+              PartUri: '/word/charts/chart1.xml',
+            },
+            Node: {
+              $ref: '1425',
+            },
+            Part: {
+              $ref: '1242',
+            },
+            RelatedNode: {
+              $ref: '1427',
+            },
+            RelatedPart: null,
+          },
+          {
+            $id: '2031',
+            Id: 'Sch_UnexpectedElementContentExpectingComplex',
+            ErrorType: 0,
+            Description:
+              'The element has unexpected child element u0027http://schemas.microsoft.com/office/drawing/2012/chart:leaderLinesu0027.',
+            Path: {
+              $id: '2032',
+              NamespacesDefinitions: {
+                $id: '2033',
+                $values: ['xmlns:c=u0022http://schemas.openxmlformats.org/drawingml/2006/chartu0022'],
+              },
+              Namespaces: {
+                $id: '2034',
+              },
+              XPath: '/c:chartSpace[1]/c:chart[1]/c:plotArea[1]/c:scatterChart[1]/c:ser[1]/c:dLbls[1]/c:extLst[1]/c:ext[1]',
+              PartUri: '/word/charts/chart1.xml',
+            },
+            Node: {
+              $ref: '1320',
+            },
+            Part: {
+              $ref: '1242',
+            },
+            RelatedNode: {
+              $ref: '1322',
+            },
+            RelatedPart: null,
+          },
+        ],
+      };
+      const validationErrors = sdkValidationErrors.$values.map((v: any) => new ValidationError(v));
+      const testHtml = '<span>hello world</span>';
+      const testFilePath = 'C:\\source\\test\\errors\\tacocat.csv';
+      const execStub = stub(childProcess, 'execPromise').returns(
+        Promise.resolve({ stdout: 'NETCore.App 5.', stderr: null }) as PromiseWithChild<any>,
+      );
+      const showErrorMessageStub = stub(window, 'showErrorMessage');
+      const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
+      const disposeSpy = spy();
+      const webview = { html: '' };
+      const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns(({
+        webview,
+        dispose: disposeSpy,
+      } as unknown) as WebviewPanel);
+      const getConfigurationStub = stub(workspace, 'getConfiguration').returns(({
+        get(key: string) {
+          switch (key) {
+            case 'fileFormatVersion':
+              return '2013';
+              break;
+            case 'outPutFilePath':
+              return testFilePath;
+            default:
+              break;
+          }
+        },
+      } as unknown) as WorkspaceConfiguration);
+      const file = Uri.file(__filename);
+      const edgeStub = stub(edge, 'func').returns(function (data: any, callback: any) {
+        expect(data).to.deep.eq(JSON.stringify({ fileName: file.fsPath, format: '2' }));
+        callback(null, JSON.stringify(sdkValidationErrors));
+      });
+      const createLogFileStub = stub(OOXMLValidator, 'createLogFile');
+      await OOXMLValidator.validate(file);
+      expect(createWebviewPanelStub.firstCall.firstArg).to.eq('validateOOXML');
+      expect(createWebviewPanelStub.firstCall.args[1]).to.eq('OOXML Validate');
+      expect(createWebviewPanelStub.firstCall.args[2]).to.deep.eq(ViewColumn.One);
+      expect(createWebviewPanelStub.firstCall.args[3]).to.deep.eq({ enableScripts: true });
+      expect(disposeSpy.called).to.eq(false, 'panel.dispose() should not have been called');
+      expect(getWebviewContentStub.getCall(1).firstArg).to.deep.eq(validationErrors);
+      expect(getWebviewContentStub.getCall(1).args[1]).to.eq(basename(file.fsPath));
+      expect(getWebviewContentStub.getCall(1).args[2]).to.eq(testFilePath);
+      expect(createLogFileStub.firstCall.firstArg).to.deep.eq(validationErrors);
+      expect(createLogFileStub.firstCall.args[1]).to.eq(testFilePath);
+      expect(webview.html).to.eq(testHtml);
+      stubs.push(
+        execStub,
+        showErrorMessageStub,
+        getWebviewContentStub,
+        createWebviewPanelStub,
+        edgeStub,
+        getConfigurationStub,
+        createLogFileStub,
+      );
+    });
+  });
+
+  test('should show the no errors view if there are no validation errors', async function () {
+    const sdkValidationErrors = {
+      $id: '1',
+      $values: [],
+    };
+    const validationErrors = sdkValidationErrors.$values.map((v: any) => new ValidationError(v));
+    const testHtml = '<span>hello world</span>';
+    const execStub = stub(childProcess, 'execPromise').returns(
+      Promise.resolve({ stdout: 'NETCore.App 5.', stderr: null }) as PromiseWithChild<any>,
+    );
+    const showErrorMessageStub = stub(window, 'showErrorMessage');
+    const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
+    const disposeSpy = spy();
+    const webview = { html: '' };
+    const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns(({
+      webview,
+      dispose: disposeSpy,
+    } as unknown) as WebviewPanel);
+    const getConfigurationStub = stub(workspace, 'getConfiguration').returns(({
+      get(key: string) {
+        switch (key) {
+          case 'fileFormatVersion':
+            return '2010';
+            break;
+          case 'outPutFilePath':
+            return undefined;
+          default:
+            break;
+        }
+      },
+    } as unknown) as WorkspaceConfiguration);
+    const file = Uri.file(__filename);
+    const edgeStub = stub(edge, 'func').returns(function (data: any, callback: any) {
+      expect(data).to.deep.eq(JSON.stringify({ fileName: file.fsPath, format: '1' }));
+      callback(null, JSON.stringify(sdkValidationErrors));
+    });
+
+    await OOXMLValidator.validate(file);
+    expect(createWebviewPanelStub.firstCall.firstArg).to.eq('validateOOXML');
+    expect(createWebviewPanelStub.firstCall.args[1]).to.eq('OOXML Validate');
+    expect(createWebviewPanelStub.firstCall.args[2]).to.deep.eq(ViewColumn.One);
+    expect(createWebviewPanelStub.firstCall.args[3]).to.deep.eq({ enableScripts: true });
+    expect(disposeSpy.called).to.eq(false, 'panel.dispose() should not have been called');
+    expect(showErrorMessageStub.callCount).to.eq(0);
+    expect(getWebviewContentStub.getCall(1).firstArg).to.deep.eq(validationErrors);
+    expect(getWebviewContentStub.getCall(1).args[1]).to.eq(basename(file.fsPath));
+    expect(getWebviewContentStub.getCall(1).args[2]).to.be.undefined;
+    expect(webview.html).to.eq(testHtml);
+    stubs.push(execStub, showErrorMessageStub, getWebviewContentStub, createWebviewPanelStub, edgeStub, getConfigurationStub);
   });
 
   teardown(function () {

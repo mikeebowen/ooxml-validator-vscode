@@ -2,12 +2,11 @@
 import { Uri, ViewColumn, WebviewPanel, window, workspace } from 'vscode';
 import { join, dirname, basename, isAbsolute, normalize, extname } from 'path';
 import { exec } from 'child_process';
-import { promisify } from 'util';
-const execPromise = promisify(exec);
+import { promisify, TextEncoder } from 'util';
 process.env.EDGE_USE_CORECLR = '1';
 const edge = require('electron-edge-js');
 import { createObjectCsvWriter } from 'csv-writer';
-import { TextEncoder } from 'util';
+import * as path from 'path';
 
 interface IValidationError {
   Description?: string
@@ -56,10 +55,14 @@ class Header {
     this.title = options.title;
   }
 }
-// wrapping fs functions, because workspace.fs methods can't be stubbed for testing
+// wrapping methods to make stubbing for tests easier
 export const effEss = {
   createDirectory: workspace.fs.createDirectory,
   writeFile: workspace.fs.writeFile,
+};
+
+export const childProcess = {
+  execPromise: promisify(exec),
 };
 
 export default class OOXMLValidator {
@@ -293,7 +296,7 @@ export default class OOXMLValidator {
   static validate = async (file: Uri) => {
     const panel: WebviewPanel = window.createWebviewPanel('validateOOXML', 'OOXML Validate', ViewColumn.One, { enableScripts: true });
     try {
-      const { stdout, stderr } = await execPromise('dotnet --list-runtimes');
+      const { stdout, stderr } = await childProcess.execPromise('dotnet --list-runtimes');
       if (stderr) {
         throw stderr;
       } else {
@@ -330,7 +333,8 @@ export default class OOXMLValidator {
         if (error) {
           throw error;
         }
-        const validationErrors: ValidationError[] = JSON.parse(result).$values.map((r: IValidationError) => new ValidationError(r));
+        const { $values: values } = JSON.parse(result);
+        const validationErrors: ValidationError[] = values.map((r: IValidationError) => new ValidationError(r));
         let content: string;
         if (validationErrors.length) {
           const path: string | undefined = workspace.getConfiguration('ooxml').get('outPutFilePath');
@@ -345,7 +349,7 @@ export default class OOXMLValidator {
         }
       });
     } catch (error) {
-      panel.dispose();
+      panel?.dispose();
       await window.showErrorMessage(error.message || error, { modal: true });
     }
   };
