@@ -6,7 +6,6 @@ import { promisify, TextEncoder } from 'util';
 process.env.EDGE_USE_CORECLR = '1';
 const edge = require('electron-edge-js');
 import { createObjectCsvWriter } from 'csv-writer';
-import * as path from 'path';
 
 interface IValidationError {
   Description?: string
@@ -138,13 +137,21 @@ export default class OOXMLValidator {
   ${
     path
       ? `<h2>A log of these errors was saved as "${path}"</h2>`
-      : '<h2>No log of these errors was saved.</h2><h3>Set "ooxml.outPutFilePath" in settings.json to save a log (csv or json) of the errors</h3>'
+      : // eslint-disable-next-line max-len
+      '<h2>No log of these errors was saved.</h2><h3>Set "ooxml.outPutFilePath" in settings.json to save a log (csv or json) of the errors</h3>'
   }
                 </div>
               </div>
               <div class="row pb-3">
                 <div class="col">
-                  <button class="btn btn-warn" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+                  <button
+                  class="btn btn-warn"
+                  type="button"
+                  data-toggle="collapse"
+                  data-target="#collapseExample"
+                  aria-expanded="false"
+                  aria-controls="collapseExample"
+                >
                     View Errors
                   </button>
                 </div>
@@ -176,7 +183,7 @@ export default class OOXMLValidator {
               <div class="row">
                 <div class="col">
                 <div class="jumbotron">
-                <h1 class="display-4 text-center">No Open Office XML Validation Errors Found!!</h1>
+                <h1 class="display-4 text-center">No Errors Found!!</h1>
                 <p class="lead text-center">OOXML Validator did not find any validation errors in ${fileName}.</p>
               </div>
                 </div>

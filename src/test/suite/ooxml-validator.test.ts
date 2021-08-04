@@ -63,11 +63,31 @@ suite('OOXMLValidator', function () {
   suite('getWebViewContent', function () {
     test('should return the errors in html if there are validation errors', function (done) {
       const validationErrors = [
-        new ValidationError({ Id: '1', Description: 'the first test error' }),
-        new ValidationError({ Id: '2', Description: 'the second test error' }),
+        new ValidationError({
+          Id: '1',
+          Description: 'the first test error',
+          Path: {
+            NamespacesDefinitions: {
+              $values: ['firstNamespace', 'secondNamespace'],
+            },
+            Namespaces: {},
+            PartUri: 'some/uri',
+          },
+        }),
+        new ValidationError({
+          Id: '2',
+          Description: 'the second test error',
+          Path: {
+            NamespacesDefinitions: {
+              $values: ['thirdNamespace', 'fourthNamespace'],
+            },
+            Namespaces: {},
+            PartUri: 'some/other/uri',
+          },
+        }),
       ];
       const testHtml =
-        '<!DOCTYPE html>\n        <html lang="en">\n        <head>\n            <meta charset="UTF-8">\n            <meta name="viewport" content="width=device-width, initial-scale=1.0">\n            <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous"></head>\n            <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>\n            <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>\n            <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>\n            <title>OOXML Validation Errors</title>\n            <body>\n              <div class="container-fluid pt-3 ol-3">\n              <div class="row pb-3">\n                <div class="col">\n                  <h1>There Were 2 Validation Errors Found</h1>\n  <h2>A log of these errors was saved as "/test-directory"</h2>\n                </div>\n              </div>\n              <div class="row pb-3">\n                <div class="col">\n                  <button class="btn btn-warn" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">\n                    View Errors\n                  </button>\n                </div>\n              </div>\n              <div class="row pb-3">\n                <div class="col">\n                  <div class="collapse" id="collapseExample">\n                    <div class="card card-body">\n                      <dl class="row">\n              <dt class="col-sm-3">Id</dt>\n              <dd class="col-sm-9">1</dd>\n              <dt class="col-sm-3">Description</dt>\n              <dd class="col-sm-9">the first test error</dd>\n              <dt class="col-sm-3">XPath</dt>\n              <dd class="col-sm-9">\n                undefined\n              </dd>\n              <dt class="col-sm-3">Part URI</dt>\n              <dd class="col-sm-9">undefined</dd>\n              <dt class="col-sm-3">NamespacesDefinitions</dt>\n              <dd class="col-sm-9">\n                <ul>\n                  undefined\n                </ul>\n              </dd>\n            </dl><dl class="row">\n              <dt class="col-sm-3">Id</dt>\n              <dd class="col-sm-9">2</dd>\n              <dt class="col-sm-3">Description</dt>\n              <dd class="col-sm-9">the second test error</dd>\n              <dt class="col-sm-3">XPath</dt>\n              <dd class="col-sm-9">\n                undefined\n              </dd>\n              <dt class="col-sm-3">Part URI</dt>\n              <dd class="col-sm-9">undefined</dd>\n              <dt class="col-sm-3">NamespacesDefinitions</dt>\n              <dd class="col-sm-9">\n                <ul>\n                  undefined\n                </ul>\n              </dd>\n            </dl>\n                    </div>\n                  </div>\n                </div>\n              </div>\n            </body>\n        </html>';
+        '<!DOCTYPE html>\n        <html lang="en">\n        <head>\n            <meta charset="UTF-8">\n            <meta name="viewport" content="width=device-width, initial-scale=1.0">\n            <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous"></head>\n            <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>\n            <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>\n            <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>\n            <title>OOXML Validation Errors</title>\n            <body>\n              <div class="container-fluid pt-3 ol-3">\n              <div class="row pb-3">\n                <div class="col">\n                  <h1>There Were 2 Validation Errors Found</h1>\n  <h2>A log of these errors was saved as "/test-directory"</h2>\n                </div>\n              </div>\n              <div class="row pb-3">\n                <div class="col">\n                  <button\n                  class="btn btn-warn"\n                  type="button"\n                  data-toggle="collapse"\n                  data-target="#collapseExample"\n                  aria-expanded="false"\n                  aria-controls="collapseExample"\n                >\n                    View Errors\n                  </button>\n                </div>\n              </div>\n              <div class="row pb-3">\n                <div class="col">\n                  <div class="collapse" id="collapseExample">\n                    <div class="card card-body">\n                      <dl class="row">\n              <dt class="col-sm-3">Id</dt>\n              <dd class="col-sm-9">1</dd>\n              <dt class="col-sm-3">Description</dt>\n              <dd class="col-sm-9">the first test error</dd>\n              <dt class="col-sm-3">XPath</dt>\n              <dd class="col-sm-9">\n                undefined\n              </dd>\n              <dt class="col-sm-3">Part URI</dt>\n              <dd class="col-sm-9">some/uri</dd>\n              <dt class="col-sm-3">NamespacesDefinitions</dt>\n              <dd class="col-sm-9">\n                <ul>\n                  <li>firstNamespace</li><li>secondNamespace</li>\n                </ul>\n              </dd>\n            </dl><dl class="row">\n              <dt class="col-sm-3">Id</dt>\n              <dd class="col-sm-9">2</dd>\n              <dt class="col-sm-3">Description</dt>\n              <dd class="col-sm-9">the second test error</dd>\n              <dt class="col-sm-3">XPath</dt>\n              <dd class="col-sm-9">\n                undefined\n              </dd>\n              <dt class="col-sm-3">Part URI</dt>\n              <dd class="col-sm-9">some/other/uri</dd>\n              <dt class="col-sm-3">NamespacesDefinitions</dt>\n              <dd class="col-sm-9">\n                <ul>\n                  <li>thirdNamespace</li><li>fourthNamespace</li>\n                </ul>\n              </dd>\n            </dl>\n                    </div>\n                  </div>\n                </div>\n              </div>\n            </body>\n        </html>';
       const html = OOXMLValidator.getWebviewContent(validationErrors, 'test-file.csv', '/test-directory');
       expect(testHtml).to.equal(html);
       done();
@@ -76,7 +96,7 @@ suite('OOXMLValidator', function () {
     test('should return the success html if there are no validation errors', function (done) {
       const validationErrors: ValidationError[] = [];
       const testHtml =
-        '<!DOCTYPE html>\n      <html lang="en">\n      <head>\n          <meta charset="UTF-8">\n          <meta name="viewport" content="width=device-width, initial-scale=1.0">\n          <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous"></head>\n          <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>\n          <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>\n          <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>\n          <title>OOXML Validation Errors</title>\n          <body>\n            <div class="container pt-3 ol-3">\n              <div class="row">\n                <div class="col">\n                <div class="jumbotron">\n                <h1 class="display-4 text-center">No Open Office XML Validation Errors Found!!</h1>\n                <p class="lead text-center">OOXML Validator did not find any validation errors in test-file.csv.</p>\n              </div>\n                </div>\n              </div>\n            </div>\n          </body>\n        </html>';
+        '<!DOCTYPE html>\n      <html lang="en">\n      <head>\n          <meta charset="UTF-8">\n          <meta name="viewport" content="width=device-width, initial-scale=1.0">\n          <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous"></head>\n          <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>\n          <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>\n          <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>\n          <title>OOXML Validation Errors</title>\n          <body>\n            <div class="container pt-3 ol-3">\n              <div class="row">\n                <div class="col">\n                <div class="jumbotron">\n                <h1 class="display-4 text-center">No Errors Found!!</h1>\n                <p class="lead text-center">OOXML Validator did not find any validation errors in test-file.csv.</p>\n              </div>\n                </div>\n              </div>\n            </div>\n          </body>\n        </html>';
       const html = OOXMLValidator.getWebviewContent(validationErrors, 'test-file.csv', '/test-directory');
       expect(testHtml).to.equal(html);
       done();
@@ -436,57 +456,57 @@ suite('OOXMLValidator', function () {
         createLogFileStub,
       );
     });
-  });
 
-  test('should show the no errors view if there are no validation errors', async function () {
-    const sdkValidationErrors = {
-      $id: '1',
-      $values: [],
-    };
-    const validationErrors = sdkValidationErrors.$values.map((v: any) => new ValidationError(v));
-    const testHtml = '<span>hello world</span>';
-    const execStub = stub(childProcess, 'execPromise').returns(
-      Promise.resolve({ stdout: 'NETCore.App 5.', stderr: null }) as PromiseWithChild<any>,
-    );
-    const showErrorMessageStub = stub(window, 'showErrorMessage');
-    const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
-    const disposeSpy = spy();
-    const webview = { html: '' };
-    const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns(({
-      webview,
-      dispose: disposeSpy,
-    } as unknown) as WebviewPanel);
-    const getConfigurationStub = stub(workspace, 'getConfiguration').returns(({
-      get(key: string) {
-        switch (key) {
-          case 'fileFormatVersion':
-            return '2010';
-            break;
-          case 'outPutFilePath':
-            return undefined;
-          default:
-            break;
-        }
-      },
-    } as unknown) as WorkspaceConfiguration);
-    const file = Uri.file(__filename);
-    const edgeStub = stub(edge, 'func').returns(function (data: any, callback: any) {
-      expect(data).to.deep.eq(JSON.stringify({ fileName: file.fsPath, format: '1' }));
-      callback(null, JSON.stringify(sdkValidationErrors));
+    test('should show the no errors view if there are no validation errors', async function () {
+      const sdkValidationErrors = {
+        $id: '1',
+        $values: [],
+      };
+      const validationErrors = sdkValidationErrors.$values.map((v: any) => new ValidationError(v));
+      const testHtml = '<span>hello world</span>';
+      const execStub = stub(childProcess, 'execPromise').returns(
+        Promise.resolve({ stdout: 'NETCore.App 5.', stderr: null }) as PromiseWithChild<any>,
+      );
+      const showErrorMessageStub = stub(window, 'showErrorMessage');
+      const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
+      const disposeSpy = spy();
+      const webview = { html: '' };
+      const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns(({
+        webview,
+        dispose: disposeSpy,
+      } as unknown) as WebviewPanel);
+      const getConfigurationStub = stub(workspace, 'getConfiguration').returns(({
+        get(key: string) {
+          switch (key) {
+            case 'fileFormatVersion':
+              return '2010';
+              break;
+            case 'outPutFilePath':
+              return undefined;
+            default:
+              break;
+          }
+        },
+      } as unknown) as WorkspaceConfiguration);
+      const file = Uri.file(__filename);
+      const edgeStub = stub(edge, 'func').returns(function (data: any, callback: any) {
+        expect(data).to.deep.eq(JSON.stringify({ fileName: file.fsPath, format: '1' }));
+        callback(null, JSON.stringify(sdkValidationErrors));
+      });
+
+      await OOXMLValidator.validate(file);
+      expect(createWebviewPanelStub.firstCall.firstArg).to.eq('validateOOXML');
+      expect(createWebviewPanelStub.firstCall.args[1]).to.eq('OOXML Validate');
+      expect(createWebviewPanelStub.firstCall.args[2]).to.deep.eq(ViewColumn.One);
+      expect(createWebviewPanelStub.firstCall.args[3]).to.deep.eq({ enableScripts: true });
+      expect(disposeSpy.called).to.eq(false, 'panel.dispose() should not have been called');
+      expect(showErrorMessageStub.callCount).to.eq(0);
+      expect(getWebviewContentStub.getCall(1).firstArg).to.deep.eq(validationErrors);
+      expect(getWebviewContentStub.getCall(1).args[1]).to.eq(basename(file.fsPath));
+      expect(getWebviewContentStub.getCall(1).args[2]).to.be.undefined;
+      expect(webview.html).to.eq(testHtml);
+      stubs.push(execStub, showErrorMessageStub, getWebviewContentStub, createWebviewPanelStub, edgeStub, getConfigurationStub);
     });
-
-    await OOXMLValidator.validate(file);
-    expect(createWebviewPanelStub.firstCall.firstArg).to.eq('validateOOXML');
-    expect(createWebviewPanelStub.firstCall.args[1]).to.eq('OOXML Validate');
-    expect(createWebviewPanelStub.firstCall.args[2]).to.deep.eq(ViewColumn.One);
-    expect(createWebviewPanelStub.firstCall.args[3]).to.deep.eq({ enableScripts: true });
-    expect(disposeSpy.called).to.eq(false, 'panel.dispose() should not have been called');
-    expect(showErrorMessageStub.callCount).to.eq(0);
-    expect(getWebviewContentStub.getCall(1).firstArg).to.deep.eq(validationErrors);
-    expect(getWebviewContentStub.getCall(1).args[1]).to.eq(basename(file.fsPath));
-    expect(getWebviewContentStub.getCall(1).args[2]).to.be.undefined;
-    expect(webview.html).to.eq(testHtml);
-    stubs.push(execStub, showErrorMessageStub, getWebviewContentStub, createWebviewPanelStub, edgeStub, getConfigurationStub);
   });
 
   teardown(function () {
