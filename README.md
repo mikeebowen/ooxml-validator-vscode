@@ -2,11 +2,11 @@
 
 [![Build Status](https://travis-ci.com/mikeebowen/ooxml-validator-vscode.svg?branch=main)](https://travis-ci.com/mikeebowen/ooxml-validator-vscode)
 
-This is the README for your extension "ooxml-validator-vscode". After writing up a brief description, we recommend including the following sections.
+The OOXML Validator validates Open Office XML files to help find errors in XML parts.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- Validate Office Open XML files
 
 For example if there is an image subfolder under your extension project workspace:
 
@@ -17,6 +17,8 @@ For example if there is an image subfolder under your extension project workspac
 ## Requirements
 
 If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+
+- .Net Core 5.x
 
 ## Extension Settings
 

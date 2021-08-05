@@ -316,7 +316,7 @@ export default class OOXMLValidator {
         }
       }
     } catch (error) {
-      await window.showErrorMessage(error.message || error, { modal: true });
+      await window.showErrorMessage(error.message || error);
       return;
     }
     try {
@@ -357,7 +357,7 @@ export default class OOXMLValidator {
       });
     } catch (error) {
       panel?.dispose();
-      await window.showErrorMessage(error.message || error, { modal: true });
+      await window.showErrorMessage(error.message || error);
     }
   };
 }
