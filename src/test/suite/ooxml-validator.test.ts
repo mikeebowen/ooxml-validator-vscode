@@ -15,6 +15,11 @@ suite('OOXMLValidator', function () {
   this.timeout(15000);
   const stubs: SinonStub[] = [];
 
+  teardown(function () {
+    stubs.forEach(s => s.restore());
+    stubs.length = 0;
+  });
+
   suite('createLogFile', function () {
     test('should throw an error if path is not absolute', async function () {
       const isAbsoluteStub = stub(path, 'isAbsolute').returns(false);
@@ -132,7 +137,6 @@ suite('OOXMLValidator', function () {
       expect(showErrorMessageStub.firstCall.firstArg).to.eq(
         'OOXML Validator requires .Net 5 be installed.\nYou can download it from "https://dotnet.microsoft.com/download/dotnet"',
       );
-      expect(showErrorMessageStub.firstCall.args[1]).to.deep.eq({ modal: true });
       stubs.push(execStub, showErrorMessageStub);
     });
 
@@ -143,12 +147,12 @@ suite('OOXMLValidator', function () {
       const showErrorMessageStub = stub(window, 'showErrorMessage');
       const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns('<span>hello world</span>');
       const disposeSpy = spy();
-      const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns(({
+      const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns({
         webview: { html: '' },
         dispose: disposeSpy,
-      } as unknown) as WebviewPanel);
+      } as unknown as WebviewPanel);
       const getFake = fake.returns(undefined);
-      const getConfigurationStub = stub(workspace, 'getConfiguration').returns(({ get: getFake } as unknown) as WorkspaceConfiguration);
+      const getConfigurationStub = stub(workspace, 'getConfiguration').returns({ get: getFake } as unknown as WorkspaceConfiguration);
       const file = Uri.file(__filename);
       const edgeStub = stub(edge, 'func').returns(function (data: any, callback: any) {
         expect(data).to.deep.eq(JSON.stringify({ fileName: file.fsPath, format: '4' }));
@@ -269,11 +273,11 @@ suite('OOXMLValidator', function () {
       const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
       const disposeSpy = spy();
       const webview = { html: '' };
-      const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns(({
+      const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns({
         webview,
         dispose: disposeSpy,
-      } as unknown) as WebviewPanel);
-      const getConfigurationStub = stub(workspace, 'getConfiguration').returns(({
+      } as unknown as WebviewPanel);
+      const getConfigurationStub = stub(workspace, 'getConfiguration').returns({
         get(key: string) {
           switch (key) {
             case 'fileFormatVersion':
@@ -285,7 +289,7 @@ suite('OOXMLValidator', function () {
               break;
           }
         },
-      } as unknown) as WorkspaceConfiguration);
+      } as unknown as WorkspaceConfiguration);
       const file = Uri.file(__filename);
       const edgeStub = stub(edge, 'func').returns(function (data: any, callback: any) {
         expect(data).to.deep.eq(JSON.stringify({ fileName: file.fsPath, format: '1' }));
@@ -411,11 +415,11 @@ suite('OOXMLValidator', function () {
       const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
       const disposeSpy = spy();
       const webview = { html: '' };
-      const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns(({
+      const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns({
         webview,
         dispose: disposeSpy,
-      } as unknown) as WebviewPanel);
-      const getConfigurationStub = stub(workspace, 'getConfiguration').returns(({
+      } as unknown as WebviewPanel);
+      const getConfigurationStub = stub(workspace, 'getConfiguration').returns({
         get(key: string) {
           switch (key) {
             case 'fileFormatVersion':
@@ -427,7 +431,7 @@ suite('OOXMLValidator', function () {
               break;
           }
         },
-      } as unknown) as WorkspaceConfiguration);
+      } as unknown as WorkspaceConfiguration);
       const file = Uri.file(__filename);
       const edgeStub = stub(edge, 'func').returns(function (data: any, callback: any) {
         expect(data).to.deep.eq(JSON.stringify({ fileName: file.fsPath, format: '2' }));
@@ -471,11 +475,11 @@ suite('OOXMLValidator', function () {
       const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
       const disposeSpy = spy();
       const webview = { html: '' };
-      const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns(({
+      const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns({
         webview,
         dispose: disposeSpy,
-      } as unknown) as WebviewPanel);
-      const getConfigurationStub = stub(workspace, 'getConfiguration').returns(({
+      } as unknown as WebviewPanel);
+      const getConfigurationStub = stub(workspace, 'getConfiguration').returns({
         get(key: string) {
           switch (key) {
             case 'fileFormatVersion':
@@ -487,7 +491,7 @@ suite('OOXMLValidator', function () {
               break;
           }
         },
-      } as unknown) as WorkspaceConfiguration);
+      } as unknown as WorkspaceConfiguration);
       const file = Uri.file(__filename);
       const edgeStub = stub(edge, 'func').returns(function (data: any, callback: any) {
         expect(data).to.deep.eq(JSON.stringify({ fileName: file.fsPath, format: '1' }));
@@ -507,10 +511,5 @@ suite('OOXMLValidator', function () {
       expect(webview.html).to.eq(testHtml);
       stubs.push(execStub, showErrorMessageStub, getWebviewContentStub, createWebviewPanelStub, edgeStub, getConfigurationStub);
     });
-  });
-
-  teardown(function () {
-    stubs.forEach(s => s.restore());
-    stubs.length = 0;
   });
 });
