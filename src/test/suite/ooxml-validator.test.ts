@@ -167,7 +167,6 @@ suite('OOXMLValidator', function () {
       expect(disposeSpy.called).to.eq(true, 'panel.dispose() should have been called');
       expect(getFake.getCall(0).args[0]).to.eq('fileFormatVersion');
       expect(showErrorMessageStub.firstCall.firstArg).to.eq('Need to walk the dog');
-      expect(showErrorMessageStub.firstCall.args[1]).to.deep.eq({ modal: true });
       stubs.push(execStub, showErrorMessageStub, getWebviewContentStub, createWebviewPanelStub, edgeStub, getConfigurationStub);
     });
 
