@@ -17,7 +17,7 @@ async function defaultTask(cb) {
     });
     cb();
   } catch (error) {
-    console.error(error.response.body);
+    console.error(error.response || error);
   }
 }
 
