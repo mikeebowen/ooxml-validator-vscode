@@ -117,6 +117,7 @@
   "dependencies": {
     "csv-writer": "^1.6.0",
     "electron-edge-js": "^14.16.0",
+    "got": "^11.8.2",
     "lodash": "^4.17.21"
   }
 }
