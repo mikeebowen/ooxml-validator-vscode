@@ -2,10 +2,12 @@
 import { Uri, ViewColumn, WebviewPanel, window, workspace } from 'vscode';
 import { join, dirname, basename, isAbsolute, normalize, extname } from 'path';
 import { exec } from 'child_process';
+import { createReadStream, existsSync } from 'fs';
 import { promisify, TextEncoder } from 'util';
 process.env.EDGE_USE_CORECLR = '1';
-const edge = require('electron-edge-js');
 import { createObjectCsvWriter } from 'csv-writer';
+import got from 'got';
+import * as FormData from 'form-data';
 
 interface IValidationError {
   Description?: string
@@ -300,25 +302,8 @@ export default class OOXMLValidator {
             </html>`;
   };
 
-  static validate = async (file: Uri) => {
+  static validate = async (uri: Uri) => {
     const panel: WebviewPanel = window.createWebviewPanel('validateOOXML', 'OOXML Validate', ViewColumn.One, { enableScripts: true });
-    try {
-      const { stdout, stderr } = await childProcess.execPromise('dotnet --list-runtimes');
-      if (stderr) {
-        throw stderr;
-      } else {
-        if (!stdout.includes('NETCore.App 5.')) {
-          await window.showErrorMessage(
-            'OOXML Validator requires .Net 5 be installed.\nYou can download it from "https://dotnet.microsoft.com/download/dotnet"',
-            { modal: true },
-          );
-          return;
-        }
-      }
-    } catch (error) {
-      await window.showErrorMessage(error.message || error);
-      return;
-    }
     try {
       panel.webview.html = OOXMLValidator.getWebviewContent();
       const formatVersions: any = {
@@ -334,27 +319,23 @@ export default class OOXMLValidator {
       // Default to the latest format version
       const version =
         versionStr && versions.includes(versionStr) ? formatVersions[versionStr] : formatVersions[versions[versions.length - 1]];
-      const validateOOXML = edge.func(join(__dirname, '..', 'bin', 'OOXML.Validator.dll'));
+      const form: FormData = new FormData();
+      form.append('file', createReadStream(uri.fsPath));
+      const { body } = await got.post(`http://localhost:7071/api/validate-ooxml/${version ?? ''}`, { body: form });
 
-      validateOOXML(JSON.stringify({ fileName: file.fsPath, format: version }), (error: any, result: any) => {
-        if (error) {
-          throw error;
+      const validationErrors: ValidationError[] = JSON.parse(body).map((r: IValidationError) => new ValidationError(r));
+      let content: string;
+      if (validationErrors.length) {
+        const path: string | undefined = workspace.getConfiguration('ooxml').get('outPutFilePath');
+        if (path) {
+          OOXMLValidator.createLogFile(validationErrors, path);
         }
-        const { $values: values } = JSON.parse(result);
-        const validationErrors: ValidationError[] = values.map((r: IValidationError) => new ValidationError(r));
-        let content: string;
-        if (validationErrors.length) {
-          const path: string | undefined = workspace.getConfiguration('ooxml').get('outPutFilePath');
-          if (path) {
-            OOXMLValidator.createLogFile(validationErrors, path);
-          }
-          content = OOXMLValidator.getWebviewContent(validationErrors, basename(file.fsPath), path);
-          panel.webview.html = content;
-        } else {
-          content = OOXMLValidator.getWebviewContent([], basename(file.fsPath));
-          panel.webview.html = content;
-        }
-      });
+        content = OOXMLValidator.getWebviewContent(validationErrors, basename(uri.fsPath), path);
+        panel.webview.html = content;
+      } else {
+        content = OOXMLValidator.getWebviewContent([], basename(uri.fsPath));
+        panel.webview.html = content;
+      }
     } catch (error) {
       panel?.dispose();
       await window.showErrorMessage(error.message || error);
