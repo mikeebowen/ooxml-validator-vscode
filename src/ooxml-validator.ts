@@ -4,7 +4,6 @@ import { join, dirname, basename, isAbsolute, normalize, extname } from 'path';
 import { exec } from 'child_process';
 import { createReadStream, existsSync } from 'fs';
 import { promisify, TextEncoder } from 'util';
-process.env.EDGE_USE_CORECLR = '1';
 import { createObjectCsvWriter } from 'csv-writer';
 import got from 'got';
 import * as FormData from 'form-data';

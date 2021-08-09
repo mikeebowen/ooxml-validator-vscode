@@ -86,8 +86,7 @@
     "test-watch": "tsc -watch -p ./",
     "pretest": "npm run test-compile && npm run lint",
     "lint": "eslint src --ext ts",
-    "test": "node ./out/test/runTest.js",
-    "postinstall": "gulp"
+    "test": "node ./out/test/runTest.js"
   },
   "devDependencies": {
     "@types/chai": "^4.2.15",
@@ -105,7 +104,6 @@
     "electron-rebuild": "^2.3.5",
     "eslint": "^7.21.0",
     "glob": "^7.1.6",
-    "gulp": "^4.0.2",
     "mocha": "^8.2.1",
     "prettier": "^2.2.1",
     "prettier-eslint": "^12.0.0",
@@ -118,7 +116,6 @@
   },
   "dependencies": {
     "csv-writer": "^1.6.0",
-    "electron-edge-js": "^14.16.0",
     "form-data": "^4.0.0",
     "got": "^11.8.2",
     "lodash": "^4.17.21"

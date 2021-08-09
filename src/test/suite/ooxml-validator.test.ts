@@ -9,7 +9,6 @@ import { TextEncoder } from 'util';
 import * as csvWriter from 'csv-writer';
 import { isEqual } from 'lodash';
 import { PromiseWithChild } from 'child_process';
-const edge = require('electron-edge-js');
 
 suite('OOXMLValidator', function () {
   this.timeout(15000);
@@ -154,10 +153,6 @@ suite('OOXMLValidator', function () {
       const getFake = fake.returns(undefined);
       const getConfigurationStub = stub(workspace, 'getConfiguration').returns({ get: getFake } as unknown as WorkspaceConfiguration);
       const file = Uri.file(__filename);
-      const edgeStub = stub(edge, 'func').returns(function (data: any, callback: any) {
-        expect(data).to.deep.eq(JSON.stringify({ fileName: file.fsPath, format: '4' }));
-        callback('Need to walk the dog', null);
-      });
 
       await OOXMLValidator.validate(file);
       expect(createWebviewPanelStub.firstCall.firstArg).to.eq('validateOOXML');
@@ -167,7 +162,7 @@ suite('OOXMLValidator', function () {
       expect(disposeSpy.called).to.eq(true, 'panel.dispose() should have been called');
       expect(getFake.getCall(0).args[0]).to.eq('fileFormatVersion');
       expect(showErrorMessageStub.firstCall.firstArg).to.eq('Need to walk the dog');
-      stubs.push(execStub, showErrorMessageStub, getWebviewContentStub, createWebviewPanelStub, edgeStub, getConfigurationStub);
+      stubs.push(execStub, showErrorMessageStub, getWebviewContentStub, createWebviewPanelStub, getConfigurationStub);
     });
 
     test('should show validation errors in the web view and use a different version of Office if one is assigned', async function () {
@@ -290,10 +285,6 @@ suite('OOXMLValidator', function () {
         },
       } as unknown as WorkspaceConfiguration);
       const file = Uri.file(__filename);
-      const edgeStub = stub(edge, 'func').returns(function (data: any, callback: any) {
-        expect(data).to.deep.eq(JSON.stringify({ fileName: file.fsPath, format: '1' }));
-        callback(null, JSON.stringify(sdkValidationErrors));
-      });
       //OOXMLValidator.getWebviewContent(validationErrors, basename(file.fsPath), path)
       await OOXMLValidator.validate(file);
       expect(createWebviewPanelStub.firstCall.firstArg).to.eq('validateOOXML');
@@ -307,7 +298,7 @@ suite('OOXMLValidator', function () {
       expect(getWebviewContentStub.getCall(1).args[1]).to.eq(basename(file.fsPath));
       expect(getWebviewContentStub.getCall(1).args[2]).to.be.undefined;
       expect(webview.html).to.eq(testHtml);
-      stubs.push(execStub, showErrorMessageStub, getWebviewContentStub, createWebviewPanelStub, edgeStub, getConfigurationStub);
+      stubs.push(execStub, showErrorMessageStub, getWebviewContentStub, createWebviewPanelStub, getConfigurationStub);
     });
 
     // eslint-disable-next-line max-len
@@ -432,10 +423,6 @@ suite('OOXMLValidator', function () {
         },
       } as unknown as WorkspaceConfiguration);
       const file = Uri.file(__filename);
-      const edgeStub = stub(edge, 'func').returns(function (data: any, callback: any) {
-        expect(data).to.deep.eq(JSON.stringify({ fileName: file.fsPath, format: '2' }));
-        callback(null, JSON.stringify(sdkValidationErrors));
-      });
       const createLogFileStub = stub(OOXMLValidator, 'createLogFile');
       await OOXMLValidator.validate(file);
       expect(createWebviewPanelStub.firstCall.firstArg).to.eq('validateOOXML');
@@ -449,15 +436,7 @@ suite('OOXMLValidator', function () {
       expect(createLogFileStub.firstCall.firstArg).to.deep.eq(validationErrors);
       expect(createLogFileStub.firstCall.args[1]).to.eq(testFilePath);
       expect(webview.html).to.eq(testHtml);
-      stubs.push(
-        execStub,
-        showErrorMessageStub,
-        getWebviewContentStub,
-        createWebviewPanelStub,
-        edgeStub,
-        getConfigurationStub,
-        createLogFileStub,
-      );
+      stubs.push(execStub, showErrorMessageStub, getWebviewContentStub, createWebviewPanelStub, getConfigurationStub, createLogFileStub);
     });
 
     test('should show the no errors view if there are no validation errors', async function () {
@@ -492,10 +471,6 @@ suite('OOXMLValidator', function () {
         },
       } as unknown as WorkspaceConfiguration);
       const file = Uri.file(__filename);
-      const edgeStub = stub(edge, 'func').returns(function (data: any, callback: any) {
-        expect(data).to.deep.eq(JSON.stringify({ fileName: file.fsPath, format: '1' }));
-        callback(null, JSON.stringify(sdkValidationErrors));
-      });
 
       await OOXMLValidator.validate(file);
       expect(createWebviewPanelStub.firstCall.firstArg).to.eq('validateOOXML');
@@ -508,7 +483,7 @@ suite('OOXMLValidator', function () {
       expect(getWebviewContentStub.getCall(1).args[1]).to.eq(basename(file.fsPath));
       expect(getWebviewContentStub.getCall(1).args[2]).to.be.undefined;
       expect(webview.html).to.eq(testHtml);
-      stubs.push(execStub, showErrorMessageStub, getWebviewContentStub, createWebviewPanelStub, edgeStub, getConfigurationStub);
+      stubs.push(execStub, showErrorMessageStub, getWebviewContentStub, createWebviewPanelStub, getConfigurationStub);
     });
   });
 });
