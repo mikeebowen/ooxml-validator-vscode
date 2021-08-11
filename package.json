@@ -38,10 +38,10 @@
           "type": "string",
           "description": "Specifies the absolute path to write the output of the validator. Path MUST be absolute"
         },
-        "ooxml.outPutFileType": {
-          "type": "string",
-          "default": "csv",
-          "description": "Specifies the type of file to output the errors to. MUST be \"csv\" or \"json\", default is \"csc\""
+        "ooxml.overwriteLogFile": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true the log file will overwrite previous log files of the same name if they exist, default is false."
         }
       }
     },

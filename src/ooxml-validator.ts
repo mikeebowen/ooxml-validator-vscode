@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { Uri, ViewColumn, WebviewPanel, window, workspace } from 'vscode';
-import { join, dirname, basename, isAbsolute, normalize, extname } from 'path';
+import { dirname, basename, isAbsolute, normalize, extname } from 'path';
 import { exec } from 'child_process';
 import { createReadStream, existsSync } from 'fs';
 import { promisify, TextEncoder } from 'util';
@@ -66,11 +66,25 @@ export const childProcess = {
 };
 
 export default class OOXMLValidator {
-  static createLogFile = async (validationErrors: ValidationError[], path: string): Promise<void> => {
-    const normalizedPath = normalize(path);
+  static createLogFile = async (validationErrors: ValidationError[], path: string): Promise<string | undefined> => {
+    let normalizedPath = normalize(path);
+    let version = 1;
+    let firstRename = true;
+
     if (isAbsolute(normalizedPath)) {
       await effEss.createDirectory(Uri.file(dirname(normalizedPath)));
       const ext = extname(basename(normalizedPath));
+      const overwriteLogFile: boolean | undefined = workspace.getConfiguration('ooxml').get('overwriteLogFile');
+
+      while (existsSync(normalizedPath) && !overwriteLogFile) {
+        if (firstRename) {
+          normalizedPath = `${normalizedPath.substring(0, normalizedPath.length - ext.length)}.v${version}${ext}`;
+        } else {
+          normalizedPath = normalizedPath.replace(/G\d{4}[A-Z]|v\d{1,100}/, `v${version}`);
+        }
+        firstRename = false;
+        version++;
+      }
       if (ext === '.json') {
         const encoder = new TextEncoder();
         await effEss.writeFile(Uri.file(normalizedPath), encoder.encode(JSON.stringify(validationErrors)));
@@ -80,6 +94,7 @@ export default class OOXMLValidator {
           path: fixedPath,
           header: Object.keys(validationErrors[0]).map(e => new Header({ id: e, title: e })),
         });
+
         const errorsForCsv = validationErrors.map((ve: ValidationError) => {
           const copy = Object.assign({}, ve);
           for (const [key, value] of Object.entries(copy)) {
@@ -90,8 +105,11 @@ export default class OOXMLValidator {
           }
           return copy;
         });
+
         await csvWriter.writeRecords(errorsForCsv);
       }
+
+      return normalizedPath;
     } else {
       await window.showErrorMessage('OOXML Validator\nooxml.outPutFilePath must be an absolute path');
     }
@@ -326,10 +344,11 @@ export default class OOXMLValidator {
       let content: string;
       if (validationErrors.length) {
         const path: string | undefined = workspace.getConfiguration('ooxml').get('outPutFilePath');
+        let pathToSavedFile: string | undefined;
         if (path) {
-          OOXMLValidator.createLogFile(validationErrors, path);
+          pathToSavedFile = await OOXMLValidator.createLogFile(validationErrors, path);
         }
-        content = OOXMLValidator.getWebviewContent(validationErrors, basename(uri.fsPath), path);
+        content = OOXMLValidator.getWebviewContent(validationErrors, basename(uri.fsPath), pathToSavedFile);
         panel.webview.html = content;
       } else {
         content = OOXMLValidator.getWebviewContent([], basename(uri.fsPath));
