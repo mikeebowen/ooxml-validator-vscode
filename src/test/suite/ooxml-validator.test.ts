@@ -71,9 +71,7 @@ suite('OOXMLValidator', function () {
           Id: '1',
           Description: 'the first test error',
           Path: {
-            NamespacesDefinitions: {
-              $values: ['firstNamespace', 'secondNamespace'],
-            },
+            NamespacesDefinitions: ['firstNamespace', 'secondNamespace'],
             Namespaces: {},
             PartUri: 'some/uri',
           },
@@ -82,9 +80,7 @@ suite('OOXMLValidator', function () {
           Id: '2',
           Description: 'the second test error',
           Path: {
-            NamespacesDefinitions: {
-              $values: ['thirdNamespace', 'fourthNamespace'],
-            },
+            NamespacesDefinitions: ['thirdNamespace', 'fourthNamespace'],
             Namespaces: {},
             PartUri: 'some/other/uri',
           },
@@ -117,99 +113,36 @@ suite('OOXMLValidator', function () {
 
   suite('validate', function () {
     test('should show validation errors in the web view and use a different version of Office if one is assigned', async function () {
-      const sdkValidationErrors = {
-        $id: '1',
-        $values: [
-          {
-            $id: '2023',
-            Id: 'Sch_UnexpectedElementContentExpectingComplex',
-            ErrorType: 0,
-            Description:
-              'The element has unexpected child element u0027http://schemas.openxmlformats.org/drawingml/2006/chart:showDLblsOverMaxu0027.',
-            Path: {
-              $id: '2024',
-              NamespacesDefinitions: {
-                $id: '2025',
-                $values: ['xmlns:c=u0022http://schemas.openxmlformats.org/drawingml/2006/chartu0022'],
-              },
-              Namespaces: {
-                $id: '2026',
-              },
-              XPath: '/c:chartSpace[1]/c:chart[1]',
-              PartUri: '/word/charts/chart1.xml',
-            },
-            Node: {
-              $ref: '1252',
-            },
-            Part: {
-              $ref: '1242',
-            },
-            RelatedNode: {
-              $ref: '1588',
-            },
-            RelatedPart: null,
+      const sdkValidationErrors = [
+        {
+          Description: "The 'uri' attribute is not declared.",
+          Path: {
+            NamespacesDefinitions: ['xmlns:c=\\"http://schemas.openxmlformats.org/drawingml/2006/chart\\"'],
+            Namespaces: {},
+            XPath: '/c:chartSpace[1]/c:chart[1]/c:extLst[1]/c:ext[1]',
+            PartUri: '/word/charts/chart3.xml',
           },
-          {
-            $id: '2027',
-            Id: 'Sch_UnexpectedElementContentExpectingComplex',
-            ErrorType: 0,
-            Description:
-              'The element has unexpected child element u0027http://schemas.microsoft.com/office/drawing/2012/chart:leaderLinesu0027.',
-            Path: {
-              $id: '2028',
-              NamespacesDefinitions: {
-                $id: '2029',
-                $values: ['xmlns:c=u0022http://schemas.openxmlformats.org/drawingml/2006/chartu0022'],
-              },
-              Namespaces: {
-                $id: '2030',
-              },
-              XPath: '/c:chartSpace[1]/c:chart[1]/c:plotArea[1]/c:scatterChart[1]/c:ser[2]/c:dLbls[1]/c:extLst[1]/c:ext[1]',
-              PartUri: '/word/charts/chart1.xml',
-            },
-            Node: {
-              $ref: '1425',
-            },
-            Part: {
-              $ref: '1242',
-            },
-            RelatedNode: {
-              $ref: '1427',
-            },
-            RelatedPart: null,
+          Id: 'Sch_UndeclaredAttribute',
+          ErrorType: 0,
+        },
+        {
+          Description:
+            "The element has invalid child element 'http://schemas.microsoft.com/office/drawing/2017/03/chart:dataDisplayOptions16'. List of possible elements expected: <http://sch…entExpectingComplex",
+          ErrorType: 0,
+        },
+        {
+          Description: "The element has unexpected child element 'http://schemas.microsoft.com/office/drawing/2012/chart:leaderLines'.",
+          Path: {
+            NamespacesDefinitions: ['xmlns:c=\\"http://schemas.openxmlformats.org/drawingml/2006/chart\\"'],
+            Namespaces: {},
+            XPath: '/c:chartSpace[1]/c:chart[1]/c:plotArea[1]/c:scatterChart[1]/c:ser[1]/c:dLbls[1]/c:extLst[1]/c:ext[1]',
+            PartUri: '/word/charts/chart1.xml',
           },
-          {
-            $id: '2031',
-            Id: 'Sch_UnexpectedElementContentExpectingComplex',
-            ErrorType: 0,
-            Description:
-              'The element has unexpected child element u0027http://schemas.microsoft.com/office/drawing/2012/chart:leaderLinesu0027.',
-            Path: {
-              $id: '2032',
-              NamespacesDefinitions: {
-                $id: '2033',
-                $values: ['xmlns:c=u0022http://schemas.openxmlformats.org/drawingml/2006/chartu0022'],
-              },
-              Namespaces: {
-                $id: '2034',
-              },
-              XPath: '/c:chartSpace[1]/c:chart[1]/c:plotArea[1]/c:scatterChart[1]/c:ser[1]/c:dLbls[1]/c:extLst[1]/c:ext[1]',
-              PartUri: '/word/charts/chart1.xml',
-            },
-            Node: {
-              $ref: '1320',
-            },
-            Part: {
-              $ref: '1242',
-            },
-            RelatedNode: {
-              $ref: '1322',
-            },
-            RelatedPart: null,
-          },
-        ],
-      };
-      const validationErrors = sdkValidationErrors.$values.map((v: any) => new ValidationError(v));
+          Id: 'Sch_UnexpectedElementContentExpectingComplex',
+          ErrorType: 0,
+        },
+      ];
+      const validationErrors = sdkValidationErrors.map((v: any) => new ValidationError(v));
       const testHtml = '<span>hello world</span>';
       const showErrorMessageStub = stub(window, 'showErrorMessage');
       const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
@@ -232,7 +165,7 @@ suite('OOXMLValidator', function () {
           }
         },
       } as unknown as WorkspaceConfiguration);
-      const gotStub = stub(got, 'post').returns({ body: JSON.stringify(sdkValidationErrors.$values) } as unknown as CancelableRequest);
+      const gotStub = stub(got, 'post').returns({ body: JSON.stringify(sdkValidationErrors) } as unknown as CancelableRequest);
       stubs.push(showErrorMessageStub, getWebviewContentStub, createWebviewPanelStub, getConfigurationStub, gotStub);
 
       const file = Uri.file(__filename);
@@ -252,101 +185,39 @@ suite('OOXMLValidator', function () {
 
     // eslint-disable-next-line max-len
     test('should show validation errors in the web view, create a file with the contents and use a different version of Office if one is assigned', async function () {
-      const sdkValidationErrors = {
-        $id: '1',
-        $values: [
-          {
-            $id: '2023',
-            Id: 'Sch_UnexpectedElementContentExpectingComplex',
-            ErrorType: 0,
-            Description:
-              'The element has unexpected child element u0027http://schemas.openxmlformats.org/drawingml/2006/chart:showDLblsOverMaxu0027.',
-            Path: {
-              $id: '2024',
-              NamespacesDefinitions: {
-                $id: '2025',
-                $values: ['xmlns:c=u0022http://schemas.openxmlformats.org/drawingml/2006/chartu0022'],
-              },
-              Namespaces: {
-                $id: '2026',
-              },
-              XPath: '/c:chartSpace[1]/c:chart[1]',
-              PartUri: '/word/charts/chart1.xml',
-            },
-            Node: {
-              $ref: '1252',
-            },
-            Part: {
-              $ref: '1242',
-            },
-            RelatedNode: {
-              $ref: '1588',
-            },
-            RelatedPart: null,
+      const sdkValidationErrors = [
+        {
+          Description: "The 'uri' attribute is not declared.",
+          Path: {
+            NamespacesDefinitions: ['xmlns:c=\\"http://schemas.openxmlformats.org/drawingml/2006/chart\\"'],
+            Namespaces: {},
+            XPath: '/c:chartSpace[1]/c:chart[1]/c:extLst[1]/c:ext[1]',
+            PartUri: '/word/charts/chart3.xml',
           },
-          {
-            $id: '2027',
-            Id: 'Sch_UnexpectedElementContentExpectingComplex',
-            ErrorType: 0,
-            Description:
-              'The element has unexpected child element u0027http://schemas.microsoft.com/office/drawing/2012/chart:leaderLinesu0027.',
-            Path: {
-              $id: '2028',
-              NamespacesDefinitions: {
-                $id: '2029',
-                $values: ['xmlns:c=u0022http://schemas.openxmlformats.org/drawingml/2006/chartu0022'],
-              },
-              Namespaces: {
-                $id: '2030',
-              },
-              XPath: '/c:chartSpace[1]/c:chart[1]/c:plotArea[1]/c:scatterChart[1]/c:ser[2]/c:dLbls[1]/c:extLst[1]/c:ext[1]',
-              PartUri: '/word/charts/chart1.xml',
-            },
-            Node: {
-              $ref: '1425',
-            },
-            Part: {
-              $ref: '1242',
-            },
-            RelatedNode: {
-              $ref: '1427',
-            },
-            RelatedPart: null,
+          Id: 'Sch_UndeclaredAttribute',
+          ErrorType: 0,
+        },
+        {
+          Description:
+            "The element has invalid child element 'http://schemas.microsoft.com/office/drawing/2017/03/chart:dataDisplayOptions16'. List of possible elements expected: <http://sch…entExpectingComplex",
+          ErrorType: 0,
+        },
+        {
+          Description: "The element has unexpected child element 'http://schemas.microsoft.com/office/drawing/2012/chart:leaderLines'.",
+          Path: {
+            NamespacesDefinitions: ['xmlns:c=\\"http://schemas.openxmlformats.org/drawingml/2006/chart\\"'],
+            Namespaces: {},
+            XPath: '/c:chartSpace[1]/c:chart[1]/c:plotArea[1]/c:scatterChart[1]/c:ser[1]/c:dLbls[1]/c:extLst[1]/c:ext[1]',
+            PartUri: '/word/charts/chart1.xml',
           },
-          {
-            $id: '2031',
-            Id: 'Sch_UnexpectedElementContentExpectingComplex',
-            ErrorType: 0,
-            Description:
-              'The element has unexpected child element u0027http://schemas.microsoft.com/office/drawing/2012/chart:leaderLinesu0027.',
-            Path: {
-              $id: '2032',
-              NamespacesDefinitions: {
-                $id: '2033',
-                $values: ['xmlns:c=u0022http://schemas.openxmlformats.org/drawingml/2006/chartu0022'],
-              },
-              Namespaces: {
-                $id: '2034',
-              },
-              XPath: '/c:chartSpace[1]/c:chart[1]/c:plotArea[1]/c:scatterChart[1]/c:ser[1]/c:dLbls[1]/c:extLst[1]/c:ext[1]',
-              PartUri: '/word/charts/chart1.xml',
-            },
-            Node: {
-              $ref: '1320',
-            },
-            Part: {
-              $ref: '1242',
-            },
-            RelatedNode: {
-              $ref: '1322',
-            },
-            RelatedPart: null,
-          },
-        ],
-      };
-      const validationErrors = sdkValidationErrors.$values.map((v: any) => new ValidationError(v));
+          Id: 'Sch_UnexpectedElementContentExpectingComplex',
+          ErrorType: 0,
+        },
+      ];
+      const validationErrors = sdkValidationErrors.map((v: any) => new ValidationError(v));
       const testHtml = '<span>hello world</span>';
       const testFilePath = 'C:\\source\\test\\errors\\tacocat.csv';
+      const logFilePath = 'a/logfile/path';
       const showErrorMessageStub = stub(window, 'showErrorMessage');
       const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
       const disposeSpy = spy();
@@ -369,8 +240,13 @@ suite('OOXMLValidator', function () {
         },
       } as unknown as WorkspaceConfiguration);
       const file = Uri.file(__filename);
-      const createLogFileStub = stub(OOXMLValidator, 'createLogFile');
+      const createLogFileStub = stub(OOXMLValidator, 'createLogFile').returns(Promise.resolve(logFilePath));
+      const gotStub = stub(got, 'post').returns({ body: JSON.stringify(sdkValidationErrors) } as unknown as CancelableRequest);
+
+      stubs.push(showErrorMessageStub, getWebviewContentStub, createWebviewPanelStub, getConfigurationStub, createLogFileStub, gotStub);
+
       await OOXMLValidator.validate(file);
+
       expect(createWebviewPanelStub.firstCall.firstArg).to.eq('validateOOXML');
       expect(createWebviewPanelStub.firstCall.args[1]).to.eq('OOXML Validate');
       expect(createWebviewPanelStub.firstCall.args[2]).to.deep.eq(ViewColumn.One);
@@ -378,19 +254,14 @@ suite('OOXMLValidator', function () {
       expect(disposeSpy.called).to.eq(false, 'panel.dispose() should not have been called');
       expect(getWebviewContentStub.getCall(1).firstArg).to.deep.eq(validationErrors);
       expect(getWebviewContentStub.getCall(1).args[1]).to.eq(basename(file.fsPath));
-      expect(getWebviewContentStub.getCall(1).args[2]).to.eq(testFilePath);
+      expect(getWebviewContentStub.getCall(1).args[2]).to.eq(logFilePath);
       expect(createLogFileStub.firstCall.firstArg).to.deep.eq(validationErrors);
       expect(createLogFileStub.firstCall.args[1]).to.eq(testFilePath);
       expect(webview.html).to.eq(testHtml);
-      stubs.push(showErrorMessageStub, getWebviewContentStub, createWebviewPanelStub, getConfigurationStub, createLogFileStub);
     });
 
     test('should show the no errors view if there are no validation errors', async function () {
-      const sdkValidationErrors = {
-        $id: '1',
-        $values: [],
-      };
-      const validationErrors = sdkValidationErrors.$values.map((v: any) => new ValidationError(v));
+      const validationErrors: ValidationError[] = [];
       const testHtml = '<span>hello world</span>';
       const showErrorMessageStub = stub(window, 'showErrorMessage');
       const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
@@ -414,8 +285,12 @@ suite('OOXMLValidator', function () {
         },
       } as unknown as WorkspaceConfiguration);
       const file = Uri.file(__filename);
+      const gotStub = stub(got, 'post').returns({ body: JSON.stringify(validationErrors) } as unknown as CancelableRequest);
+
+      stubs.push(showErrorMessageStub, getWebviewContentStub, createWebviewPanelStub, getConfigurationStub, gotStub);
 
       await OOXMLValidator.validate(file);
+
       expect(createWebviewPanelStub.firstCall.firstArg).to.eq('validateOOXML');
       expect(createWebviewPanelStub.firstCall.args[1]).to.eq('OOXML Validate');
       expect(createWebviewPanelStub.firstCall.args[2]).to.deep.eq(ViewColumn.One);
@@ -426,7 +301,6 @@ suite('OOXMLValidator', function () {
       expect(getWebviewContentStub.getCall(1).args[1]).to.eq(basename(file.fsPath));
       expect(getWebviewContentStub.getCall(1).args[2]).to.be.undefined;
       expect(webview.html).to.eq(testHtml);
-      stubs.push(showErrorMessageStub, getWebviewContentStub, createWebviewPanelStub, getConfigurationStub);
     });
   });
 });

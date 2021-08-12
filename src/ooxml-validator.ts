@@ -10,9 +10,7 @@ import * as FormData from 'form-data';
 interface IValidationError {
   Description?: string
   Path?: {
-    NamespacesDefinitions?: {
-      $values: string[]
-    }
+    NamespacesDefinitions?: string[]
     Namespaces: any
     XPath?: string
     PartUri?: string
@@ -23,7 +21,7 @@ interface IValidationError {
 
 export class ValidationError {
   Description?: string;
-  NamespacesDefinitions?: string[];
+  NamespacesDefinitions?: string[] | undefined;
   Namespaces: any;
   XPath?: string;
   PartUri?: string;
@@ -34,7 +32,7 @@ export class ValidationError {
     this.Id = options.Id;
     this.Description = options.Description;
     this.Namespaces = options.Path?.Namespaces;
-    this.NamespacesDefinitions = options.Path?.NamespacesDefinitions?.$values;
+    this.NamespacesDefinitions = options.Path?.NamespacesDefinitions;
     this.XPath = options.Path?.XPath;
     this.PartUri = options.Path?.PartUri;
     this.ErrorType = options.ErrorType;
