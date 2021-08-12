@@ -32,7 +32,7 @@
       "properties": {
         "ooxml.fileFormatVersion": {
           "type": "number",
-          "description": "Specifies the version of Office to use to validate OOXML files."
+          "description": "Specifies the version of Office to use to validate OOXML files. 0 = Office 2007, 1 = Office 2010, 2 = Office 2013, 3 = Office 2016, 4 = Office 2019"
         },
         "ooxml.outPutFilePath": {
           "type": "string",

@@ -70,10 +70,14 @@ export default class OOXMLValidator {
     let normalizedPath = normalize(path);
     let version = 1;
     let firstRename = true;
+    let ext = extname(basename(normalizedPath));
+    if (ext !== '.csv' && ext !== '.json') {
+      normalizedPath = `${normalizedPath}.csv`;
+      ext = '.csv';
+    }
 
     if (isAbsolute(normalizedPath)) {
       await effEss.createDirectory(Uri.file(dirname(normalizedPath)));
-      const ext = extname(basename(normalizedPath));
       const overwriteLogFile: boolean | undefined = workspace.getConfiguration('ooxml').get('overwriteLogFile');
 
       while (existsSync(normalizedPath) && !overwriteLogFile) {
@@ -89,9 +93,8 @@ export default class OOXMLValidator {
         const encoder = new TextEncoder();
         await effEss.writeFile(Uri.file(normalizedPath), encoder.encode(JSON.stringify(validationErrors)));
       } else {
-        const fixedPath = ext === '.csv' ? normalizedPath : `${normalizedPath}.csv`;
         const csvWriter = createObjectCsvWriter({
-          path: fixedPath,
+          path: normalizedPath,
           header: Object.keys(validationErrors[0]).map(e => new Header({ id: e, title: e })),
         });
 
