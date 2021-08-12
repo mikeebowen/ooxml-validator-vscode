@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { Uri, ViewColumn, WebviewPanel, window, workspace } from 'vscode';
 import { dirname, basename, isAbsolute, normalize, extname } from 'path';
-import { exec } from 'child_process';
 import { createReadStream, existsSync } from 'fs';
 import { promisify, TextEncoder } from 'util';
 import { createObjectCsvWriter } from 'csv-writer';
@@ -59,10 +58,6 @@ class Header {
 export const effEss = {
   createDirectory: workspace.fs.createDirectory,
   writeFile: workspace.fs.writeFile,
-};
-
-export const childProcess = {
-  execPromise: promisify(exec),
 };
 
 export default class OOXMLValidator {

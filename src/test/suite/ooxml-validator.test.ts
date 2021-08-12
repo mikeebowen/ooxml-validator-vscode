@@ -3,12 +3,12 @@ import { Uri, ViewColumn, WebviewPanel, window, workspace, WorkspaceConfiguratio
 import { SinonStub, spy, stub, fake } from 'sinon';
 import { expect } from 'chai';
 import * as path from 'path';
-import OOXMLValidator, { ValidationError, effEss, childProcess } from '../../ooxml-validator';
+import OOXMLValidator, { ValidationError, effEss } from '../../ooxml-validator';
 import { basename, normalize } from 'path';
 import { TextEncoder } from 'util';
 import * as csvWriter from 'csv-writer';
 import { isEqual } from 'lodash';
-import { PromiseWithChild } from 'child_process';
+import got, { CancelableRequest } from 'got';
 
 suite('OOXMLValidator', function () {
   this.timeout(15000);
@@ -25,7 +25,7 @@ suite('OOXMLValidator', function () {
       const showErrorMessageStub = stub(window, 'showErrorMessage').returns(Promise.resolve() as Thenable<undefined>);
       stubs.push(isAbsoluteStub, showErrorMessageStub);
       await OOXMLValidator.createLogFile([], 'tacocat');
-      expect(isAbsoluteStub.calledWith('tacocat')).to.be.true;
+      expect(isAbsoluteStub.args[0][0]).to.eq('tacocat.csv');
       expect(showErrorMessageStub.calledOnce).to.be.true;
     });
 
@@ -116,55 +116,6 @@ suite('OOXMLValidator', function () {
   });
 
   suite('validate', function () {
-    test('should show error modal if exec returns an error', async function () {
-      const execStub = stub(childProcess, 'execPromise').returns(
-        Promise.resolve({ stdout: null, stderr: 'Out of coffee' }) as PromiseWithChild<any>,
-      );
-      const showErrorMessageStub = stub(window, 'showErrorMessage');
-      await OOXMLValidator.validate(Uri.file(__filename));
-      expect(execStub.firstCall.firstArg).to.eq('dotnet --list-runtimes');
-      expect(showErrorMessageStub.firstCall.firstArg).to.eq('Out of coffee');
-      stubs.push(execStub, showErrorMessageStub);
-    });
-
-    test('should show an error modal if .Net Core 5 is not installed', async function () {
-      const execStub = stub(childProcess, 'execPromise').returns(
-        Promise.resolve({ stdout: 'Coffee! Coffee! Coffee!', stderr: null }) as PromiseWithChild<any>,
-      );
-      const showErrorMessageStub = stub(window, 'showErrorMessage');
-      await OOXMLValidator.validate(Uri.file(__filename));
-      expect(showErrorMessageStub.firstCall.firstArg).to.eq(
-        'OOXML Validator requires .Net 5 be installed.\nYou can download it from "https://dotnet.microsoft.com/download/dotnet"',
-      );
-      stubs.push(execStub, showErrorMessageStub);
-    });
-
-    test('should show an error modal if the edge callback is called with an error', async function () {
-      const execStub = stub(childProcess, 'execPromise').returns(
-        Promise.resolve({ stdout: 'NETCore.App 5.', stderr: null }) as PromiseWithChild<any>,
-      );
-      const showErrorMessageStub = stub(window, 'showErrorMessage');
-      const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns('<span>hello world</span>');
-      const disposeSpy = spy();
-      const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns({
-        webview: { html: '' },
-        dispose: disposeSpy,
-      } as unknown as WebviewPanel);
-      const getFake = fake.returns(undefined);
-      const getConfigurationStub = stub(workspace, 'getConfiguration').returns({ get: getFake } as unknown as WorkspaceConfiguration);
-      const file = Uri.file(__filename);
-
-      await OOXMLValidator.validate(file);
-      expect(createWebviewPanelStub.firstCall.firstArg).to.eq('validateOOXML');
-      expect(createWebviewPanelStub.firstCall.args[1]).to.eq('OOXML Validate');
-      expect(createWebviewPanelStub.firstCall.args[2]).to.deep.eq(ViewColumn.One);
-      expect(createWebviewPanelStub.firstCall.args[3]).to.deep.eq({ enableScripts: true });
-      expect(disposeSpy.called).to.eq(true, 'panel.dispose() should have been called');
-      expect(getFake.getCall(0).args[0]).to.eq('fileFormatVersion');
-      expect(showErrorMessageStub.firstCall.firstArg).to.eq('Need to walk the dog');
-      stubs.push(execStub, showErrorMessageStub, getWebviewContentStub, createWebviewPanelStub, getConfigurationStub);
-    });
-
     test('should show validation errors in the web view and use a different version of Office if one is assigned', async function () {
       const sdkValidationErrors = {
         $id: '1',
@@ -260,9 +211,6 @@ suite('OOXMLValidator', function () {
       };
       const validationErrors = sdkValidationErrors.$values.map((v: any) => new ValidationError(v));
       const testHtml = '<span>hello world</span>';
-      const execStub = stub(childProcess, 'execPromise').returns(
-        Promise.resolve({ stdout: 'NETCore.App 5.', stderr: null }) as PromiseWithChild<any>,
-      );
       const showErrorMessageStub = stub(window, 'showErrorMessage');
       const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
       const disposeSpy = spy();
@@ -284,21 +232,22 @@ suite('OOXMLValidator', function () {
           }
         },
       } as unknown as WorkspaceConfiguration);
+      const gotStub = stub(got, 'post').returns({ body: JSON.stringify(sdkValidationErrors.$values) } as unknown as CancelableRequest);
+      stubs.push(showErrorMessageStub, getWebviewContentStub, createWebviewPanelStub, getConfigurationStub, gotStub);
+
       const file = Uri.file(__filename);
-      //OOXMLValidator.getWebviewContent(validationErrors, basename(file.fsPath), path)
       await OOXMLValidator.validate(file);
+
       expect(createWebviewPanelStub.firstCall.firstArg).to.eq('validateOOXML');
       expect(createWebviewPanelStub.firstCall.args[1]).to.eq('OOXML Validate');
       expect(createWebviewPanelStub.firstCall.args[2]).to.deep.eq(ViewColumn.One);
       expect(createWebviewPanelStub.firstCall.args[3]).to.deep.eq({ enableScripts: true });
       expect(disposeSpy.called).to.eq(false, 'panel.dispose() should not have been called');
-      // expect(getFake.getCall(0).args[1]).to.eq('outPutFilePath');
       expect(showErrorMessageStub.callCount).to.eq(0);
       expect(getWebviewContentStub.getCall(1).firstArg).to.deep.eq(validationErrors);
       expect(getWebviewContentStub.getCall(1).args[1]).to.eq(basename(file.fsPath));
       expect(getWebviewContentStub.getCall(1).args[2]).to.be.undefined;
       expect(webview.html).to.eq(testHtml);
-      stubs.push(execStub, showErrorMessageStub, getWebviewContentStub, createWebviewPanelStub, getConfigurationStub);
     });
 
     // eslint-disable-next-line max-len
@@ -398,9 +347,6 @@ suite('OOXMLValidator', function () {
       const validationErrors = sdkValidationErrors.$values.map((v: any) => new ValidationError(v));
       const testHtml = '<span>hello world</span>';
       const testFilePath = 'C:\\source\\test\\errors\\tacocat.csv';
-      const execStub = stub(childProcess, 'execPromise').returns(
-        Promise.resolve({ stdout: 'NETCore.App 5.', stderr: null }) as PromiseWithChild<any>,
-      );
       const showErrorMessageStub = stub(window, 'showErrorMessage');
       const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
       const disposeSpy = spy();
@@ -436,7 +382,7 @@ suite('OOXMLValidator', function () {
       expect(createLogFileStub.firstCall.firstArg).to.deep.eq(validationErrors);
       expect(createLogFileStub.firstCall.args[1]).to.eq(testFilePath);
       expect(webview.html).to.eq(testHtml);
-      stubs.push(execStub, showErrorMessageStub, getWebviewContentStub, createWebviewPanelStub, getConfigurationStub, createLogFileStub);
+      stubs.push(showErrorMessageStub, getWebviewContentStub, createWebviewPanelStub, getConfigurationStub, createLogFileStub);
     });
 
     test('should show the no errors view if there are no validation errors', async function () {
@@ -446,9 +392,6 @@ suite('OOXMLValidator', function () {
       };
       const validationErrors = sdkValidationErrors.$values.map((v: any) => new ValidationError(v));
       const testHtml = '<span>hello world</span>';
-      const execStub = stub(childProcess, 'execPromise').returns(
-        Promise.resolve({ stdout: 'NETCore.App 5.', stderr: null }) as PromiseWithChild<any>,
-      );
       const showErrorMessageStub = stub(window, 'showErrorMessage');
       const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
       const disposeSpy = spy();
@@ -483,7 +426,7 @@ suite('OOXMLValidator', function () {
       expect(getWebviewContentStub.getCall(1).args[1]).to.eq(basename(file.fsPath));
       expect(getWebviewContentStub.getCall(1).args[2]).to.be.undefined;
       expect(webview.html).to.eq(testHtml);
-      stubs.push(execStub, showErrorMessageStub, getWebviewContentStub, createWebviewPanelStub, getConfigurationStub);
+      stubs.push(showErrorMessageStub, getWebviewContentStub, createWebviewPanelStub, getConfigurationStub);
     });
   });
 });
