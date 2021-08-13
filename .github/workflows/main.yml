@@ -30,7 +30,7 @@ jobs:
       - name: Unit Tests
         run: npm run test
 
-        - name: Coveralls
+      - name: Coveralls
         uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
