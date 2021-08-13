@@ -1,6 +1,7 @@
 # ooxml-validator-vscode README
 
 [![OOXML Validator VS Code Tests](https://github.com/mikeebowen/ooxml-validator-vscode/actions/workflows/main.yml/badge.svg)](https://github.com/mikeebowen/ooxml-validator-vscode/actions/workflows/main.yml)
+[![Coverage Status](https://coveralls.io/repos/github/mikeebowen/ooxml-validator-vscode/badge.svg?branch=main)](https://coveralls.io/github/mikeebowen/ooxml-validator-vscode?branch=main)
 
 The OOXML Validator validates Open Office XML files to help find errors in XML parts.
 
