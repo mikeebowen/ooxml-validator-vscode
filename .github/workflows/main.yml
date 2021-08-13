@@ -8,33 +8,19 @@ on:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
-
     strategy:
-      fail-fast: false
       matrix:
-        node-version: [10.x, 12.x, 14.x]
         os: [macos-latest, ubuntu-latest, windows-latest]
-
+    runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v2
-
-      - name: Use Node.js ${{ matrix.node-version }}
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install Node.js
         uses: actions/setup-node@v1
         with:
-          node-version: ${{ matrix.node-version }}
-
-      - name: Build
-        run: |
-          npm install
-
-      - name: Unit Tests
-        run: xvfb-run -a npm test
+          node-version: 10.x
+      - run: npm install
+      - run: xvfb-run -a npm test
         if: runner.os == 'Linux'
-        run: npm test
-        if: runner.os != 'Linux
-
-      - name: Coveralls
-        uses: coverallsapp/github-action@master
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - run: npm test
+        if: runner.os != 'Linux'
