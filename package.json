@@ -86,10 +86,10 @@
     "test-watch": "tsc -watch -p ./",
     "pretest": "npm run test-compile && npm run lint",
     "lint": "eslint src --ext ts",
-    "test": "node ./out/test/runTest.js",
-    "posttest": "nyc report --reporter=lcov"
+    "test": "node ./out/test/runTest.js"
   },
   "devDependencies": {
+    "@istanbuljs/nyc-config-typescript": "^1.0.1",
     "@types/chai": "^4.2.15",
     "@types/form-data": "^2.5.0",
     "@types/glob": "^7.1.3",

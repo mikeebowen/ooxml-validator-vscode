@@ -1,2 +1,2 @@
 declare module 'csv-writer'
-declare module 'electron-edge-js'
+declare module '@istanbuljs/nyc-config-typescript'
