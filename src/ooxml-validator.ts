@@ -2,7 +2,7 @@
 import { Uri, ViewColumn, WebviewPanel, window, workspace } from 'vscode';
 import { dirname, basename, isAbsolute, normalize, extname } from 'path';
 import { createReadStream, existsSync } from 'fs';
-import { promisify, TextEncoder } from 'util';
+import { TextEncoder } from 'util';
 import { createObjectCsvWriter } from 'csv-writer';
 import got from 'got';
 import * as FormData from 'form-data';
@@ -143,6 +143,15 @@ export default class OOXMLValidator {
             <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
             <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
             <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+            <style>
+              label#error-btn:after {
+                content:'View Errors';
+              }
+
+              [aria-expanded="true"] label#error-btn:after {
+                content:'Hide Errors';
+              }
+            </style>
             <title>OOXML Validation Errors</title>
             <body>
               <div class="container-fluid pt-3 ol-3">
@@ -159,16 +168,20 @@ export default class OOXMLValidator {
               </div>
               <div class="row pb-3">
                 <div class="col">
-                  <button
-                  class="btn btn-warn"
-                  type="button"
+                <div class="btn-group-toggle"
                   data-toggle="collapse"
                   data-target="#collapseExample"
                   aria-expanded="false"
                   aria-controls="collapseExample"
                 >
-                    View Errors
-                  </button>
+                  <label class="btn btn-outline-secondary" id="error-btn">
+                    <input
+                      class="btn btn-outline-secondary"
+                      type="checkbox"
+                      checked
+                    />
+                  </label>
+                  </div>
                 </div>
               </div>
               <div class="row pb-3">
@@ -334,7 +347,10 @@ export default class OOXMLValidator {
         versionStr && versions.includes(versionStr) ? formatVersions[versionStr] : formatVersions[versions[versions.length - 1]];
       const form: FormData = new FormData();
       form.append('file', createReadStream(uri.fsPath));
-      const { body } = await got.post(`http://localhost:7071/api/validate-ooxml/${version ?? ''}`, { body: form });
+      const { body } = await got.post(`https://validateooxml20210819141002.azurewebsites.net/api/validate-ooxml/${version ?? ''}`, {
+        body: form,
+        headers: { 'x-functions-key': 'dkolwfaMEvFGy6jMS8GJKup8JxMuWMS8CTm3/Ke8bqt3iAu6ZQlkZQ==' },
+      });
 
       const validationErrors: ValidationError[] = JSON.parse(body).map((r: IValidationError) => new ValidationError(r));
       let content: string;
