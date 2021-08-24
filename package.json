@@ -2,6 +2,7 @@
   "name": "ooxml-validator-vscode",
   "displayName": "OOXML Validator",
   "description": "A VS Code extension to validate Office Open XML files (.docx, .xlsx, and .pptx)",
+  "icon": "assets/icon.png",
   "version": "0.0.1",
   "publisher": "mikeebowen",
   "homepage": "https://github.com/mikeebowen/ooxml-validator-vscode/blob/master/README.md",
@@ -32,7 +33,7 @@
       "properties": {
         "ooxml.fileFormatVersion": {
           "type": "number",
-          "description": "Specifies the version of Office to use to validate OOXML files. 0 = Office 2007, 1 = Office 2010, 2 = Office 2013, 3 = Office 2016, 4 = Office 2019"
+          "description": "Number that specifies the version of Office to use to validate OOXML files. Must be in [2007, 2010, 2013, 2016, 2019]. Defaults to 2019"
         },
         "ooxml.outPutFilePath": {
           "type": "string",
