@@ -61,8 +61,6 @@ export const effEss = {
 export default class OOXMLValidator {
   static createLogFile = async (validationErrors: ValidationError[], path: string): Promise<string | undefined> => {
     let normalizedPath = normalize(path);
-    let version = 1;
-    let firstRename = true;
     let ext = extname(basename(normalizedPath));
     if (ext !== '.csv' && ext !== '.json') {
       normalizedPath = `${normalizedPath}.csv`;
@@ -73,14 +71,10 @@ export default class OOXMLValidator {
       await effEss.createDirectory(Uri.file(dirname(normalizedPath)));
       const overwriteLogFile: boolean | undefined = workspace.getConfiguration('ooxml').get('overwriteLogFile');
 
-      while (existsSync(normalizedPath) && !overwriteLogFile) {
-        if (firstRename) {
-          normalizedPath = `${normalizedPath.substring(0, normalizedPath.length - ext.length)}.v${version}${ext}`;
-        } else {
-          normalizedPath = normalizedPath.replace(/G\d{4}[A-Z]|v\d{1,100}/, `v${version}`);
-        }
-        firstRename = false;
-        version++;
+      if (!overwriteLogFile) {
+        normalizedPath = `${normalizedPath.substring(0, normalizedPath.length - ext.length)}.${new Date()
+          .toISOString()
+          .replaceAll(':', '_')}${ext}`;
       }
       if (ext === '.json') {
         const encoder = new TextEncoder();
@@ -339,7 +333,7 @@ export default class OOXMLValidator {
         '2016': '8',
         '2019': '16',
       };
-      const configVersion: number | undefined = workspace.getConfiguration('ooxml').get('fileFormatVersion');
+      const configVersion: number | string | undefined = workspace.getConfiguration('ooxml').get('fileFormatVersion');
       const versionStr = configVersion?.toString();
       const versions = Object.keys(formatVersions);
       // Default to the latest format version
