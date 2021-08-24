@@ -333,11 +333,11 @@ export default class OOXMLValidator {
     try {
       panel.webview.html = OOXMLValidator.getWebviewContent();
       const formatVersions: any = {
-        '2007': '0',
-        '2010': '1',
-        '2013': '2',
-        '2016': '3',
-        '2019': '4',
+        '2007': '1',
+        '2010': '2',
+        '2013': '4',
+        '2016': '8',
+        '2019': '16',
       };
       const configVersion: number | undefined = workspace.getConfiguration('ooxml').get('fileFormatVersion');
       const versionStr = configVersion?.toString();
