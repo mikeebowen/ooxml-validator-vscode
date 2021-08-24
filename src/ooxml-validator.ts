@@ -84,7 +84,7 @@ export default class OOXMLValidator {
       }
       if (ext === '.json') {
         const encoder = new TextEncoder();
-        await effEss.writeFile(Uri.file(normalizedPath), encoder.encode(JSON.stringify(validationErrors)));
+        await effEss.writeFile(Uri.file(normalizedPath), encoder.encode(JSON.stringify(validationErrors, null, 2)));
       } else {
         const csvWriter = createObjectCsvWriter({
           path: normalizedPath,
@@ -97,7 +97,7 @@ export default class OOXMLValidator {
             const k = key as 'Id' | 'Description' | 'Namespaces' | 'NamespacesDefinitions' | 'XPath' | 'PartUri' | 'ErrorType';
             if (typeof copy[k] === 'object') {
             }
-            copy[k] = JSON.stringify(value);
+            copy[k] = JSON.stringify(value, null, 2);
           }
           return copy;
         });
