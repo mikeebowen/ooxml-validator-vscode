@@ -1,13 +1,12 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import { Uri, ViewColumn, WebviewPanel, window, workspace } from 'vscode';
-import { dirname, basename, isAbsolute, normalize, extname } from 'path';
-import { createReadStream, existsSync } from 'fs';
-import { promisify, TextEncoder } from 'util';
+import { Uri, ViewColumn, WebviewPanel, window, workspace, commands, extensions } from 'vscode';
+import { dirname, basename, isAbsolute, normalize, extname, join } from 'path';
+import { TextEncoder } from 'util';
+import { spawnSync } from 'child_process';
 import { createObjectCsvWriter } from 'csv-writer';
-import got from 'got';
-import * as FormData from 'form-data';
+import { IDotnetAcquireResult } from './models/IDotnetAcquireResult';
 
-interface IValidationError {
+export interface IValidationError {
   Description?: string
   Path?: {
     NamespacesDefinitions?: string[]
@@ -61,8 +60,6 @@ export const effEss = {
 export default class OOXMLValidator {
   static createLogFile = async (validationErrors: ValidationError[], path: string): Promise<string | undefined> => {
     let normalizedPath = normalize(path);
-    let version = 1;
-    let firstRename = true;
     let ext = extname(basename(normalizedPath));
     if (ext !== '.csv' && ext !== '.json') {
       normalizedPath = `${normalizedPath}.csv`;
@@ -73,18 +70,14 @@ export default class OOXMLValidator {
       await effEss.createDirectory(Uri.file(dirname(normalizedPath)));
       const overwriteLogFile: boolean | undefined = workspace.getConfiguration('ooxml').get('overwriteLogFile');
 
-      while (existsSync(normalizedPath) && !overwriteLogFile) {
-        if (firstRename) {
-          normalizedPath = `${normalizedPath.substring(0, normalizedPath.length - ext.length)}.v${version}${ext}`;
-        } else {
-          normalizedPath = normalizedPath.replace(/G\d{4}[A-Z]|v\d{1,100}/, `v${version}`);
-        }
-        firstRename = false;
-        version++;
+      if (!overwriteLogFile) {
+        normalizedPath = `${normalizedPath.substring(0, normalizedPath.length - ext.length)}.${new Date()
+          .toISOString()
+          .replaceAll(':', '_')}${ext}`;
       }
       if (ext === '.json') {
         const encoder = new TextEncoder();
-        await effEss.writeFile(Uri.file(normalizedPath), encoder.encode(JSON.stringify(validationErrors)));
+        await effEss.writeFile(Uri.file(normalizedPath), encoder.encode(JSON.stringify(validationErrors, null, 2)));
       } else {
         const csvWriter = createObjectCsvWriter({
           path: normalizedPath,
@@ -97,7 +90,7 @@ export default class OOXMLValidator {
             const k = key as 'Id' | 'Description' | 'Namespaces' | 'NamespacesDefinitions' | 'XPath' | 'PartUri' | 'ErrorType';
             if (typeof copy[k] === 'object') {
             }
-            copy[k] = JSON.stringify(value);
+            copy[k] = JSON.stringify(value, null, 2);
           }
           return copy;
         });
@@ -143,6 +136,15 @@ export default class OOXMLValidator {
             <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
             <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
             <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+            <style>
+              label#error-btn:after {
+                content:'View Errors';
+              }
+
+              [aria-expanded="true"] label#error-btn:after {
+                content:'Hide Errors';
+              }
+            </style>
             <title>OOXML Validation Errors</title>
             <body>
               <div class="container-fluid pt-3 ol-3">
@@ -159,16 +161,20 @@ export default class OOXMLValidator {
               </div>
               <div class="row pb-3">
                 <div class="col">
-                  <button
-                  class="btn btn-warn"
-                  type="button"
+                <div class="btn-group-toggle"
                   data-toggle="collapse"
                   data-target="#collapseExample"
                   aria-expanded="false"
                   aria-controls="collapseExample"
                 >
-                    View Errors
-                  </button>
+                  <label class="btn btn-outline-secondary" id="error-btn">
+                    <input
+                      class="btn btn-outline-secondary"
+                      type="checkbox"
+                      checked
+                    />
+                  </label>
+                  </div>
                 </div>
               </div>
               <div class="row pb-3">
@@ -320,24 +326,52 @@ export default class OOXMLValidator {
     try {
       panel.webview.html = OOXMLValidator.getWebviewContent();
       const formatVersions: any = {
-        '2007': '0',
-        '2010': '1',
-        '2013': '2',
-        '2016': '3',
-        '2019': '4',
+        '2007': '1',
+        '2010': '2',
+        '2013': '4',
+        '2016': '8',
+        '2019': '16',
       };
-      const configVersion: number | undefined = workspace.getConfiguration('ooxml').get('fileFormatVersion');
+      const configVersion: number | string | undefined = workspace.getConfiguration('ooxml').get('fileFormatVersion');
       const versionStr = configVersion?.toString();
       const versions = Object.keys(formatVersions);
       // Default to the latest format version
       const version =
         versionStr && versions.includes(versionStr) ? formatVersions[versionStr] : formatVersions[versions[versions.length - 1]];
-      const form: FormData = new FormData();
-      form.append('file', createReadStream(uri.fsPath));
-      const { body } = await got.post(`http://localhost:7071/api/validate-ooxml/${version ?? ''}`, { body: form });
 
-      const validationErrors: ValidationError[] = JSON.parse(body).map((r: IValidationError) => new ValidationError(r));
+      await commands.executeCommand('dotnet.showAcquisitionLog');
+
+      const requestingExtensionId = 'mikeebowen.ooxml-validator-vscode';
+      const commandRes = await commands.executeCommand<IDotnetAcquireResult>('dotnet.acquire', {
+        version: '3.1',
+        requestingExtensionId,
+      });
+      const dotnetPath = commandRes!.dotnetPath;
+      if (!dotnetPath) {
+        throw new Error('Could not resolve the dotnet path!');
+      }
+
+      const ooxmlValidateExtension = extensions.getExtension(requestingExtensionId);
+      if (!ooxmlValidateExtension) {
+        throw new Error('Could not find OOXML Validate extension.');
+      }
+      const ooxmlValidateLocation = join(ooxmlValidateExtension.extensionPath, 'OOXMLValidator', 'OOXMLValidatorCLI.dll');
+      const ooxmlValidateArgs = [ooxmlValidateLocation, uri.fsPath, version];
+
+      // This will install any missing Linux dependencies.
+      await commands.executeCommand('dotnet.ensureDotnetDependencies', { command: dotnetPath, arguments: ooxmlValidateArgs });
+
+      const result = spawnSync(dotnetPath, ooxmlValidateArgs);
+      const stderr = result?.stderr?.toString();
+      if (stderr?.length > 0) {
+        window.showErrorMessage(`Failed to run OOXML Validator: ${stderr}`);
+        return;
+      }
+
+      const appOutput = result?.stdout?.toString();
+      const validationErrors: ValidationError[] = JSON.parse(appOutput).map((r: IValidationError) => new ValidationError(r));
       let content: string;
+
       if (validationErrors.length) {
         const path: string | undefined = workspace.getConfiguration('ooxml').get('outPutFilePath');
         let pathToSavedFile: string | undefined;
@@ -350,7 +384,7 @@ export default class OOXMLValidator {
         content = OOXMLValidator.getWebviewContent([], basename(uri.fsPath));
         panel.webview.html = content;
       }
-    } catch (error) {
+    } catch (error: any) {
       panel?.dispose();
       await window.showErrorMessage(error.message || error);
     }

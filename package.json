@@ -1,7 +1,8 @@
 {
   "name": "ooxml-validator-vscode",
-  "displayName": "ooxml-validator-vscode",
-  "description": "A VS Code extension to validate Open Office XML files (.docx, .xlsx, and .pptx)",
+  "displayName": "OOXML Validator",
+  "description": "A VS Code extension to validate Office Open XML files (.docx, .xlsx, and .pptx)",
+  "icon": "assets/icon.png",
   "version": "0.0.1",
   "publisher": "mikeebowen",
   "homepage": "https://github.com/mikeebowen/ooxml-validator-vscode/blob/master/README.md",
@@ -13,7 +14,7 @@
     "url": "https://github.com/mikeebowen/ooxml-validator-vscode/issues"
   },
   "engines": {
-    "vscode": "^1.55.0"
+    "vscode": "^1.59.0"
   },
   "keywords": [
     "ooxml"
@@ -32,7 +33,7 @@
       "properties": {
         "ooxml.fileFormatVersion": {
           "type": "number",
-          "description": "Specifies the version of Office to use to validate OOXML files. 0 = Office 2007, 1 = Office 2010, 2 = Office 2013, 3 = Office 2016, 4 = Office 2019"
+          "description": "Number that specifies the version of Office to use to validate OOXML files. Must be in [2007, 2010, 2013, 2016, 2019]. Defaults to 2019"
         },
         "ooxml.outPutFilePath": {
           "type": "string",
@@ -79,8 +80,8 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
-    "compile": "webpack",
-    "watch": "webpack --watch",
+    "compile": "webpack --mode development",
+    "watch": "webpack --mode development --watch",
     "package": "webpack --mode production --devtool hidden-source-map",
     "test-compile": "tsc -p ./",
     "test-watch": "tsc -watch -p ./",
@@ -94,11 +95,11 @@
     "@types/form-data": "^2.5.0",
     "@types/glob": "^7.1.3",
     "@types/got": "^9.6.12",
-    "@types/lodash": "^4.14.168",
+    "@types/lodash": "^4.14.172",
     "@types/mocha": "^8.0.4",
     "@types/node": "^12.20.11",
     "@types/sinon": "^9.0.11",
-    "@types/vscode": "^1.55.0",
+    "@types/vscode": "^1.59.0",
     "@typescript-eslint/eslint-plugin": "^4.14.1",
     "@typescript-eslint/parser": "^4.14.1",
     "chai": "^4.3.4",
@@ -106,6 +107,7 @@
     "electron-rebuild": "^2.3.5",
     "eslint": "^7.21.0",
     "glob": "^7.1.6",
+    "lodash": "^4.17.21",
     "mocha": "^8.2.1",
     "mocha-lcov-reporter": "^1.3.0",
     "nyc": "^15.1.0",
@@ -121,9 +123,6 @@
     "webpack-cli": "^4.4.0"
   },
   "dependencies": {
-    "csv-writer": "^1.6.0",
-    "form-data": "^4.0.0",
-    "got": "^11.8.2",
-    "lodash": "^4.17.21"
+    "csv-writer": "^1.6.0"
   }
 }

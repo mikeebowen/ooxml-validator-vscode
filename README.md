@@ -1,75 +1,39 @@
-# ooxml-validator-vscode README
-
 [![OOXML Validator VS Code Tests](https://github.com/mikeebowen/ooxml-validator-vscode/actions/workflows/main.yml/badge.svg)](https://github.com/mikeebowen/ooxml-validator-vscode/actions/workflows/main.yml)
+[![Coverage Status](https://coveralls.io/repos/github/mikeebowen/ooxml-validator-vscode/badge.svg?branch=main)](https://coveralls.io/github/mikeebowen/ooxml-validator-vscode?branch=main)
 
-The OOXML Validator validates Open Office XML files to help find errors in XML parts.
+# OOXML Validator VSCode Extension
+
+The OOXML Validator validates Open Office XML files to help find errors in XML parts. It is a wrapper around the [Open XML SDK](https://github.com/OfficeDev/Open-XML-SDK)'s validate functionality. It displays the errors found in the xml parts of an Office Open XML file in VSCode and creates an optional CSV or JSON log file of the errors.
 
 ## Features
 
-- Validate Office Open XML files
+- Validates Office Open XML files against Office 2007, 2010, 2013, 2016, or 2019 _Defaults to 2019_
+- Creates optional CSV or JSON log file of the errors.
 
-For example if there is an image subfolder under your extension project workspace:
+## Usage
 
-\!\[feature X\]\(images/feature-x.png\)
+To validate an OOXML file, right click on the file to validate and select "Validate OOXML". This displays the validation errors in the VS Code window. If `ooxml.outPutFilePath` is set, a log of the validation errors is created (defaults to .csv).
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+![Demonstration of OOXML Viewer VS Code Extension](https://raw.githubusercontent.com/mikeebowen/ooxml-validator-vscode/main/assets/view-errors.gif)
 
-## Requirements
-
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
-
-- .Net Core 5.x
+<sup>\* Using [Excel Viewer](https://marketplace.visualstudio.com/items?itemName=GrapeCity.gc-excelviewer) to view the .csv file.</sup>
 
 ## Extension Settings
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
 This extension contributes the following settings:
 
-- `myExtension.enable`: enable/disable this extension
-- `myExtension.thing`: set to `blah` to do something
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
+- `ooxml.fileFormatVersion`: Number that specifies the version of Office to use to validate OOXML files. Must be in `[2007, 2010, 2013, 2016, 2019]`. Defaults to 2019
+- `ooxml.outPutFilePath`:
+  String that specifies the absolute filepath to write the output of the validator. If the filenames does not end in .json or .csv, ".csv" will be appended to the filename and saved as a .csv file. Path **MUST** be absolute
+- `ooxml.overwriteLogFile`: If true the log file will overwrite previous log files of the same name if they exist. If false a unique timestamp is added to the filename. Default is false.
 
 ## Release Notes
 
-Users appreciate release notes as you update your extension.
-
 ### 1.0.0
 
-Initial release of ...
+Initial release of OOXML Validator.
 
-### 1.0.1
+Adds Features
 
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-- [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-**Note:** You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-- Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux)
-- Toggle preview (`Shift+CMD+V` on macOS or `Shift+Ctrl+V` on Windows and Linux)
-- Press `Ctrl+Space` (Windows, Linux) or `Cmd+Space` (macOS) to see a list of Markdown snippets
-
-### For more information
-
-- [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-- [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+- Validates OOXML files.
+- Creates optional .csv or .json file of the errors.

@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import { Uri, ViewColumn, WebviewPanel, window, workspace, WorkspaceConfiguration } from 'vscode';
+import { commands, Extension, extensions, Uri, ViewColumn, WebviewPanel, window, workspace, WorkspaceConfiguration } from 'vscode';
 import { SinonStub, spy, stub, fake } from 'sinon';
 import { expect } from 'chai';
 import * as path from 'path';
-import OOXMLValidator, { ValidationError, effEss } from '../../ooxml-validator';
+import * as child_process from 'child_process';
+import OOXMLValidator, { ValidationError, effEss, IValidationError } from '../../ooxml-validator';
 import { basename, normalize } from 'path';
 import { TextEncoder } from 'util';
 import * as csvWriter from 'csv-writer';
@@ -35,11 +36,18 @@ suite('OOXMLValidator', function () {
       const writeFileStub: SinonStub = stub(effEss, 'writeFile');
       stubs.push(writeFileStub, createDirectoryStub);
       const errors: ValidationError[] = [new ValidationError({}), new ValidationError({})];
-      OOXMLValidator.createLogFile(errors, testPath).then(() => {
-        expect(createDirectoryStub.calledOnceWith(Uri.file(path.dirname(testPath)))).to.be.true;
-        expect(writeFileStub.calledOnceWith(Uri.file(testPath), new TextEncoder().encode(JSON.stringify(errors)))).to.be.true;
-        done();
-      });
+      const testBuffer = new TextEncoder().encode(JSON.stringify(errors, null, 2));
+
+      OOXMLValidator.createLogFile(errors, testPath)
+        .then(() => {
+          expect(createDirectoryStub.calledOnceWith(Uri.file(path.dirname(testPath)))).to.be.true;
+          expect(writeFileStub.args[0][0].path.includes(normalize(path.join(__dirname, 'racecar'))));
+          expect(Buffer.from(testBuffer).equals(Buffer.from(writeFileStub.args[0][1]))).to.be.true;
+          done();
+        })
+        .catch(err => {
+          done(err);
+        });
     });
 
     test('should create a csv file if json is not specified', async function () {
@@ -87,7 +95,7 @@ suite('OOXMLValidator', function () {
         }),
       ];
       const testHtml =
-        '<!DOCTYPE html>\n        <html lang="en">\n        <head>\n            <meta charset="UTF-8">\n            <meta name="viewport" content="width=device-width, initial-scale=1.0">\n            <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous"></head>\n            <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>\n            <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>\n            <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>\n            <title>OOXML Validation Errors</title>\n            <body>\n              <div class="container-fluid pt-3 ol-3">\n              <div class="row pb-3">\n                <div class="col">\n                  <h1>There Were 2 Validation Errors Found</h1>\n  <h2>A log of these errors was saved as "/test-directory"</h2>\n                </div>\n              </div>\n              <div class="row pb-3">\n                <div class="col">\n                  <button\n                  class="btn btn-warn"\n                  type="button"\n                  data-toggle="collapse"\n                  data-target="#collapseExample"\n                  aria-expanded="false"\n                  aria-controls="collapseExample"\n                >\n                    View Errors\n                  </button>\n                </div>\n              </div>\n              <div class="row pb-3">\n                <div class="col">\n                  <div class="collapse" id="collapseExample">\n                    <div class="card card-body">\n                      <dl class="row">\n              <dt class="col-sm-3">Id</dt>\n              <dd class="col-sm-9">1</dd>\n              <dt class="col-sm-3">Description</dt>\n              <dd class="col-sm-9">the first test error</dd>\n              <dt class="col-sm-3">XPath</dt>\n              <dd class="col-sm-9">\n                undefined\n              </dd>\n              <dt class="col-sm-3">Part URI</dt>\n              <dd class="col-sm-9">some/uri</dd>\n              <dt class="col-sm-3">NamespacesDefinitions</dt>\n              <dd class="col-sm-9">\n                <ul>\n                  <li>firstNamespace</li><li>secondNamespace</li>\n                </ul>\n              </dd>\n            </dl><dl class="row">\n              <dt class="col-sm-3">Id</dt>\n              <dd class="col-sm-9">2</dd>\n              <dt class="col-sm-3">Description</dt>\n              <dd class="col-sm-9">the second test error</dd>\n              <dt class="col-sm-3">XPath</dt>\n              <dd class="col-sm-9">\n                undefined\n              </dd>\n              <dt class="col-sm-3">Part URI</dt>\n              <dd class="col-sm-9">some/other/uri</dd>\n              <dt class="col-sm-3">NamespacesDefinitions</dt>\n              <dd class="col-sm-9">\n                <ul>\n                  <li>thirdNamespace</li><li>fourthNamespace</li>\n                </ul>\n              </dd>\n            </dl>\n                    </div>\n                  </div>\n                </div>\n              </div>\n            </body>\n        </html>';
+        '<!DOCTYPE html>\n        <html lang="en">\n        <head>\n            <meta charset="UTF-8">\n            <meta name="viewport" content="width=device-width, initial-scale=1.0">\n            <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous"></head>\n            <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>\n            <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>\n            <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>\n            <style>\n              label#error-btn:after {\n                content:\'View Errors\';\n              }\n\n              [aria-expanded="true"] label#error-btn:after {\n                content:\'Hide Errors\';\n              }\n            </style>\n            <title>OOXML Validation Errors</title>\n            <body>\n              <div class="container-fluid pt-3 ol-3">\n              <div class="row pb-3">\n                <div class="col">\n                  <h1>There Were 2 Validation Errors Found</h1>\n  <h2>A log of these errors was saved as "/test-directory"</h2>\n                </div>\n              </div>\n              <div class="row pb-3">\n                <div class="col">\n                <div class="btn-group-toggle"\n                  data-toggle="collapse"\n                  data-target="#collapseExample"\n                  aria-expanded="false"\n                  aria-controls="collapseExample"\n                >\n                  <label class="btn btn-outline-secondary" id="error-btn">\n                    <input\n                      class="btn btn-outline-secondary"\n                      type="checkbox"\n                      checked\n                    />\n                  </label>\n                  </div>\n                </div>\n              </div>\n              <div class="row pb-3">\n                <div class="col">\n                  <div class="collapse" id="collapseExample">\n                    <div class="card card-body">\n                      <dl class="row">\n              <dt class="col-sm-3">Id</dt>\n              <dd class="col-sm-9">1</dd>\n              <dt class="col-sm-3">Description</dt>\n              <dd class="col-sm-9">the first test error</dd>\n              <dt class="col-sm-3">XPath</dt>\n              <dd class="col-sm-9">\n                undefined\n              </dd>\n              <dt class="col-sm-3">Part URI</dt>\n              <dd class="col-sm-9">some/uri</dd>\n              <dt class="col-sm-3">NamespacesDefinitions</dt>\n              <dd class="col-sm-9">\n                <ul>\n                  <li>firstNamespace</li><li>secondNamespace</li>\n                </ul>\n              </dd>\n            </dl><dl class="row">\n              <dt class="col-sm-3">Id</dt>\n              <dd class="col-sm-9">2</dd>\n              <dt class="col-sm-3">Description</dt>\n              <dd class="col-sm-9">the second test error</dd>\n              <dt class="col-sm-3">XPath</dt>\n              <dd class="col-sm-9">\n                undefined\n              </dd>\n              <dt class="col-sm-3">Part URI</dt>\n              <dd class="col-sm-9">some/other/uri</dd>\n              <dt class="col-sm-3">NamespacesDefinitions</dt>\n              <dd class="col-sm-9">\n                <ul>\n                  <li>thirdNamespace</li><li>fourthNamespace</li>\n                </ul>\n              </dd>\n            </dl>\n                    </div>\n                  </div>\n                </div>\n              </div>\n            </body>\n        </html>';
       const html = OOXMLValidator.getWebviewContent(validationErrors, 'test-file.csv', '/test-directory');
       expect(testHtml).to.equal(html);
       done();
@@ -142,7 +150,7 @@ suite('OOXMLValidator', function () {
           ErrorType: 0,
         },
       ];
-      const validationErrors = sdkValidationErrors.map((v: any) => new ValidationError(v));
+      const validationErrors = sdkValidationErrors.map((v: IValidationError) => new ValidationError(v));
       const testHtml = '<span>hello world</span>';
       const showErrorMessageStub = stub(window, 'showErrorMessage');
       const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
@@ -156,7 +164,7 @@ suite('OOXMLValidator', function () {
         get(key: string) {
           switch (key) {
             case 'fileFormatVersion':
-              return '2010';
+              return 2010;
               break;
             case 'outPutFilePath':
               return undefined;
@@ -165,8 +173,28 @@ suite('OOXMLValidator', function () {
           }
         },
       } as unknown as WorkspaceConfiguration);
-      const gotStub = stub(got, 'post').returns({ body: JSON.stringify(sdkValidationErrors) } as unknown as CancelableRequest);
-      stubs.push(showErrorMessageStub, getWebviewContentStub, createWebviewPanelStub, getConfigurationStub, gotStub);
+      const executeCommandStub = stub(commands, 'executeCommand').returns(Promise.resolve({ dotnetPath: 'tacocat' }));
+
+      const getExtensionStub = stub(extensions, 'getExtension').returns({ extensionPath: 'foobar' } as Extension<unknown>);
+
+      const spawnSyncStub = stub(child_process, 'spawnSync').returns({
+        stdout: Buffer.from(JSON.stringify(sdkValidationErrors)),
+        stderr: Buffer.from(''),
+        pid: 7,
+        output: [null],
+        status: 13,
+        signal: null,
+      });
+
+      stubs.push(
+        showErrorMessageStub,
+        getWebviewContentStub,
+        createWebviewPanelStub,
+        getConfigurationStub,
+        executeCommandStub,
+        getExtensionStub,
+        spawnSyncStub,
+      );
 
       const file = Uri.file(__filename);
       await OOXMLValidator.validate(file);
