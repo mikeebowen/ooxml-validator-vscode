@@ -88,8 +88,6 @@ export default class OOXMLValidator {
           const copy = Object.assign({}, ve);
           for (const [key, value] of Object.entries(copy)) {
             const k = key as 'Id' | 'Description' | 'Namespaces' | 'NamespacesDefinitions' | 'XPath' | 'PartUri' | 'ErrorType';
-            if (typeof copy[k] === 'object') {
-            }
             copy[k] = JSON.stringify(value, null, 2);
           }
           return copy;
