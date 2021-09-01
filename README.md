@@ -1,14 +1,18 @@
 [![OOXML Validator VS Code Tests](https://github.com/mikeebowen/ooxml-validator-vscode/actions/workflows/main.yml/badge.svg)](https://github.com/mikeebowen/ooxml-validator-vscode/actions/workflows/main.yml)
-[![Coverage Status](https://coveralls.io/repos/github/mikeebowen/ooxml-validator-vscode/badge.svg?branch=main)](https://coveralls.io/github/mikeebowen/ooxml-validator-vscode?branch=main)
+[![Coverage Status](https://coveralls.io/repos/github/mikeebowen/ooxml-validator-vscode/badge.svg?branch=main&service=github)](https://coveralls.io/github/mikeebowen/ooxml-validator-vscode?branch=main&service=github)
 
 # OOXML Validator VSCode Extension
 
-The OOXML Validator validates Open Office XML files to help find errors in XML parts. It is a wrapper around the [Open XML SDK](https://github.com/OfficeDev/Open-XML-SDK)'s validate functionality. It displays the errors found in the xml parts of an Office Open XML file in VSCode and creates an optional CSV or JSON log file of the errors.
+The OOXML Validator validates Office Open XML files (.docx, .xlsx, .pptx) and displays the validation errors found in the xml parts in VSCode and creates an optional CSV or JSON log file of the validation errors.
 
 ## Features
 
 - Validates Office Open XML files against Office 2007, 2010, 2013, 2016, or 2019 _Defaults to 2019_
 - Creates optional CSV or JSON log file of the errors.
+
+## Requirements
+
+The OOXML Validator requires that the [.NET Install Tool for Extension Authors](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.vscode-dotnet-runtime) VS Code extension be installed.
 
 ## Usage
 
