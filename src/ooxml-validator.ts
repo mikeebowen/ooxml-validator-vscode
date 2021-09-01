@@ -383,8 +383,11 @@ export default class OOXMLValidator {
         panel.webview.html = content;
       }
     } catch (error: any) {
+      const errMsg = error?.message?.includes('dotnet.')
+        ? 'The ".NET Install Tool for Extension Authors" VS Code extension\nMUST be installed for the OOXML Validator extension to work.'
+        : error.message || error;
       panel?.dispose();
-      await window.showErrorMessage(error.message || error);
+      await window.showErrorMessage(errMsg, { modal: true });
     }
   };
 }
