@@ -6,7 +6,7 @@ import * as shallowDeepEqual from 'chai-shallow-deep-equal';
 import * as path from 'path';
 import * as child_process from 'child_process';
 import OOXMLValidator, { ValidationError, effEss, IValidationError } from '../../ooxml-validator';
-import { basename, normalize } from 'path';
+import { basename, normalize, join } from 'path';
 import { TextEncoder } from 'util';
 import * as csvWriter from 'csv-writer';
 import { isEqual } from 'lodash';
@@ -203,6 +203,7 @@ suite('OOXMLValidator', function () {
 
       const file = Uri.file(__filename);
       const requestingExtensionId = 'mikeebowen.ooxml-validator-vscode';
+      const executeCommandArgs = [join('foobar', 'OOXMLValidator', 'OOXMLValidatorCLI.dll')];
 
       await OOXMLValidator.validate(file);
 
@@ -221,10 +222,10 @@ suite('OOXMLValidator', function () {
       expect(executeCommandStub.getCall(1).firstArg).to.eq('dotnet.acquire');
       expect(executeCommandStub.getCall(2).lastArg).to.shallowDeepEqual({
         command: dotnetPath,
-        arguments: ['foobar\\OOXMLValidator\\OOXMLValidatorCLI.dll'],
+        arguments: executeCommandArgs,
       });
       expect(spawnSyncStub.firstCall.args[0]).to.eq(dotnetPath);
-      expect(spawnSyncStub.firstCall.args[1]).to.shallowDeepEqual(['foobar\\OOXMLValidator\\OOXMLValidatorCLI.dll']);
+      expect(spawnSyncStub.firstCall.args[1]).to.shallowDeepEqual(executeCommandArgs);
     });
 
     // eslint-disable-next-line max-len
@@ -302,6 +303,8 @@ suite('OOXMLValidator', function () {
         signal: null,
       });
 
+      const commandArgs = [join('foobar', 'OOXMLValidator', 'OOXMLValidatorCLI.dll')];
+
       stubs.push(
         showErrorMessageStub,
         getWebviewContentStub,
@@ -331,10 +334,10 @@ suite('OOXMLValidator', function () {
       expect(executeCommandStub.getCall(1).firstArg).to.eq('dotnet.acquire');
       expect(executeCommandStub.getCall(2).lastArg).to.shallowDeepEqual({
         command: dotnetPath,
-        arguments: ['foobar\\OOXMLValidator\\OOXMLValidatorCLI.dll'],
+        arguments: commandArgs,
       });
       expect(spawnSyncStub.firstCall.args[0]).to.eq(dotnetPath);
-      expect(spawnSyncStub.firstCall.args[1]).to.shallowDeepEqual(['foobar\\OOXMLValidator\\OOXMLValidatorCLI.dll']);
+      expect(spawnSyncStub.firstCall.args[1]).to.shallowDeepEqual(commandArgs);
     });
 
     test('should show the no errors view if there are no validation errors', async function () {
@@ -378,6 +381,7 @@ suite('OOXMLValidator', function () {
         status: 13,
         signal: null,
       });
+      const commandArgs = [join('foobar', 'OOXMLValidator', 'OOXMLValidatorCLI.dll')];
 
       stubs.push(
         showErrorMessageStub,
@@ -406,10 +410,10 @@ suite('OOXMLValidator', function () {
       expect(executeCommandStub.getCall(1).firstArg).to.eq('dotnet.acquire');
       expect(executeCommandStub.getCall(2).lastArg).to.shallowDeepEqual({
         command: dotnetPath,
-        arguments: ['foobar\\OOXMLValidator\\OOXMLValidatorCLI.dll'],
+        arguments: commandArgs,
       });
       expect(spawnSyncStub.firstCall.args[0]).to.eq(dotnetPath);
-      expect(spawnSyncStub.firstCall.args[1]).to.shallowDeepEqual(['foobar\\OOXMLValidator\\OOXMLValidatorCLI.dll']);
+      expect(spawnSyncStub.firstCall.args[1]).to.shallowDeepEqual(commandArgs);
     });
 
     test('should throw an error if dotnetPath is undefined', async function () {
