@@ -87,14 +87,16 @@
     "test-watch": "tsc -watch -p ./",
     "pretest": "npm run test-compile && npm run lint",
     "lint": "eslint src --ext ts",
-    "test": "node ./out/test/runTest.js"
+    "test": "node ./out/test/runTest.js",
+    "coverage": "node ./out/test/runCoverage.js"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
     "@types/chai": "^4.2.15",
     "@types/form-data": "^2.5.0",
-    "@types/glob": "^7.1.3",
+    "@types/glob": "^7.1.4",
     "@types/got": "^9.6.12",
+    "@types/istanbul": "^0.4.30",
     "@types/lodash": "^4.14.172",
     "@types/mocha": "^8.0.4",
     "@types/node": "^12.20.11",
