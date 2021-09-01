@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { commands, Extension, extensions, Uri, ViewColumn, WebviewPanel, window, workspace, WorkspaceConfiguration } from 'vscode';
-import { SinonStub, spy, stub, fake } from 'sinon';
-import { expect } from 'chai';
+import { SinonStub, spy, stub } from 'sinon';
+import { expect, use } from 'chai';
+import * as shallowDeepEqual from 'chai-shallow-deep-equal';
 import * as path from 'path';
 import * as child_process from 'child_process';
 import OOXMLValidator, { ValidationError, effEss, IValidationError } from '../../ooxml-validator';
@@ -9,7 +10,8 @@ import { basename, normalize } from 'path';
 import { TextEncoder } from 'util';
 import * as csvWriter from 'csv-writer';
 import { isEqual } from 'lodash';
-import got, { CancelableRequest } from 'got';
+
+use(shallowDeepEqual);
 
 suite('OOXMLValidator', function () {
   this.timeout(15000);
@@ -175,7 +177,8 @@ suite('OOXMLValidator', function () {
       } as unknown as WorkspaceConfiguration);
       const executeCommandStub = stub(commands, 'executeCommand').returns(Promise.resolve({ dotnetPath: 'tacocat' }));
 
-      const getExtensionStub = stub(extensions, 'getExtension').returns({ extensionPath: 'foobar' } as Extension<unknown>);
+      const extensionPath = 'foobar';
+      const getExtensionStub = stub(extensions, 'getExtension').returns({ extensionPath } as Extension<unknown>);
 
       const spawnSyncStub = stub(child_process, 'spawnSync').returns({
         stdout: Buffer.from(JSON.stringify(sdkValidationErrors)),
@@ -208,6 +211,9 @@ suite('OOXMLValidator', function () {
       expect(getWebviewContentStub.getCall(1).firstArg).to.deep.eq(validationErrors);
       expect(getWebviewContentStub.getCall(1).args[1]).to.eq(basename(file.fsPath));
       expect(getWebviewContentStub.getCall(1).args[2]).to.be.undefined;
+      expect(getExtensionStub.getCall(1).firstArg).to.eq('mikeebowen.ooxml-validator-vscode');
+      expect(spawnSyncStub.firstCall.args[0]).to.eq(extensionPath);
+      expect(spawnSyncStub.firstCall.args[1]).to.deep.eq([]);
       expect(webview.html).to.eq(testHtml);
     });
 
@@ -269,9 +275,33 @@ suite('OOXMLValidator', function () {
       } as unknown as WorkspaceConfiguration);
       const file = Uri.file(__filename);
       const createLogFileStub = stub(OOXMLValidator, 'createLogFile').returns(Promise.resolve(logFilePath));
-      const gotStub = stub(got, 'post').returns({ body: JSON.stringify(sdkValidationErrors) } as unknown as CancelableRequest);
 
-      stubs.push(showErrorMessageStub, getWebviewContentStub, createWebviewPanelStub, getConfigurationStub, createLogFileStub, gotStub);
+      const extensionPath = 'foobar';
+      const getExtensionStub = stub(extensions, 'getExtension').returns({ extensionPath } as Extension<unknown>);
+
+      const requestingExtensionId = 'mikeebowen.ooxml-validator-vscode';
+      const dotnetPath = 'road to nowhere';
+      const executeCommandStub = stub(commands, 'executeCommand').returns(Promise.resolve({ dotnetPath }));
+
+      const spawnSyncStub = stub(child_process, 'spawnSync').returns({
+        stdout: Buffer.from(JSON.stringify(sdkValidationErrors)),
+        stderr: Buffer.from(''),
+        pid: 7,
+        output: [null],
+        status: 13,
+        signal: null,
+      });
+
+      stubs.push(
+        showErrorMessageStub,
+        getWebviewContentStub,
+        createWebviewPanelStub,
+        getConfigurationStub,
+        createLogFileStub,
+        getExtensionStub,
+        spawnSyncStub,
+        executeCommandStub,
+      );
 
       await OOXMLValidator.validate(file);
 
@@ -286,6 +316,15 @@ suite('OOXMLValidator', function () {
       expect(createLogFileStub.firstCall.firstArg).to.deep.eq(validationErrors);
       expect(createLogFileStub.firstCall.args[1]).to.eq(testFilePath);
       expect(webview.html).to.eq(testHtml);
+      expect(getExtensionStub.getCall(0).firstArg).to.eq(requestingExtensionId);
+      expect(executeCommandStub.getCall(0).firstArg).to.eq('dotnet.showAcquisitionLog');
+      expect(executeCommandStub.getCall(1).firstArg).to.eq('dotnet.acquire');
+      expect(executeCommandStub.getCall(2).lastArg).to.shallowDeepEqual({
+        command: dotnetPath,
+        arguments: ['foobar\\OOXMLValidator\\OOXMLValidatorCLI.dll'],
+      });
+      expect(spawnSyncStub.firstCall.args[0]).to.eq(dotnetPath);
+      expect(spawnSyncStub.firstCall.args[1]).to.shallowDeepEqual(['foobar\\OOXMLValidator\\OOXMLValidatorCLI.dll']);
     });
 
     test('should show the no errors view if there are no validation errors', async function () {
@@ -313,9 +352,8 @@ suite('OOXMLValidator', function () {
         },
       } as unknown as WorkspaceConfiguration);
       const file = Uri.file(__filename);
-      const gotStub = stub(got, 'post').returns({ body: JSON.stringify(validationErrors) } as unknown as CancelableRequest);
 
-      stubs.push(showErrorMessageStub, getWebviewContentStub, createWebviewPanelStub, getConfigurationStub, gotStub);
+      stubs.push(showErrorMessageStub, getWebviewContentStub, createWebviewPanelStub, getConfigurationStub);
 
       await OOXMLValidator.validate(file);
 
