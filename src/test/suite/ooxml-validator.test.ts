@@ -548,5 +548,35 @@ suite('OOXMLValidator', function () {
 
       expect(showErrorMessageStub.firstCall.firstArg).to.eq(`Failed to run OOXML Validator: ${errorMsg}`);
     });
+
+    test('should prompt the user to instal the dotnet runtime extension if trying to call it throws an error', async function () {
+      const errMsg = 'dotnet.showAcquisitionLog command not found';
+      const executeCommandStub = stub(commands, 'executeCommand').throws(errMsg);
+      const showErrorMessageStub = stub(window, 'showErrorMessage');
+      const file = Uri.file(__filename);
+
+      stubs.push(executeCommandStub, showErrorMessageStub);
+
+      await OOXMLValidator.validate(file);
+
+      expect(showErrorMessageStub.firstCall.firstArg).to.eq(
+        'The ".NET Install Tool for Extension Authors" VS Code extension\nMUST be installed for the OOXML Validator extension to work.',
+      );
+      expect(showErrorMessageStub.firstCall.lastArg).to.deep.eq({ modal: true });
+    });
+
+    test('should display an error if one is thrown', async function () {
+      const errMsg = ['eek gads no tacos!!'];
+      const executeCommandStub = stub(commands, 'executeCommand').throws(errMsg);
+      const showErrorMessageStub = stub(window, 'showErrorMessage');
+      const file = Uri.file(__filename);
+
+      stubs.push(executeCommandStub, showErrorMessageStub);
+
+      await OOXMLValidator.validate(file);
+
+      expect(showErrorMessageStub.firstCall.firstArg).to.deep.eq(errMsg);
+      expect(showErrorMessageStub.firstCall.lastArg).to.deep.eq({ modal: true });
+    });
   });
 });
