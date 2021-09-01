@@ -1,5 +1,5 @@
 [![OOXML Validator VS Code Tests](https://github.com/mikeebowen/ooxml-validator-vscode/actions/workflows/main.yml/badge.svg)](https://github.com/mikeebowen/ooxml-validator-vscode/actions/workflows/main.yml)
-[![Coverage Status](https://coveralls.io/repos/github/mikeebowen/ooxml-validator-vscode/badge.svg?branch=main&service=github)](https://coveralls.io/github/mikeebowen/ooxml-validator-vscode?branch=main&service=github)
+[![Coverage Status](https://coveralls.io/repos/github/mikeebowen/ooxml-validator-vscode/badge.svg?branch=main)](https://coveralls.io/github/mikeebowen/ooxml-validator-vscode?branch=main)
 
 # OOXML Validator VSCode Extension
 
@@ -33,11 +33,4 @@ This extension contributes the following settings:
 
 ## Release Notes
 
-### 1.0.0
-
-Initial release of OOXML Validator.
-
-Adds Features
-
-- Validates OOXML files.
-- Creates optional .csv or .json file of the errors.
+Please see the [Changelog](CHANGELOG.md)
