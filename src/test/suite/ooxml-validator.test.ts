@@ -411,5 +411,138 @@ suite('OOXMLValidator', function () {
       expect(spawnSyncStub.firstCall.args[0]).to.eq(dotnetPath);
       expect(spawnSyncStub.firstCall.args[1]).to.shallowDeepEqual(['foobar\\OOXMLValidator\\OOXMLValidatorCLI.dll']);
     });
+
+    test('should throw an error if dotnetPath is undefined', async function () {
+      const executeCommandStub = stub(commands, 'executeCommand').returns(Promise.resolve({}));
+      const file = Uri.file(__filename);
+      const testHtml = '<span>hello world</span>';
+      const showErrorMessageStub = stub(window, 'showErrorMessage');
+      const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
+      const disposeSpy = spy();
+      const webview = { html: '' };
+      const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns({
+        webview,
+        dispose: disposeSpy,
+      } as unknown as WebviewPanel);
+      const getConfigurationStub = stub(workspace, 'getConfiguration').returns({
+        get(key: string) {
+          switch (key) {
+            case 'fileFormatVersion':
+              return '2010';
+              break;
+            case 'outPutFilePath':
+              return undefined;
+            default:
+              break;
+          }
+        },
+      } as unknown as WorkspaceConfiguration);
+
+      stubs.push(executeCommandStub, showErrorMessageStub, getWebviewContentStub, createWebviewPanelStub, getConfigurationStub);
+
+      await OOXMLValidator.validate(file);
+
+      expect(disposeSpy.called).to.eq(true, 'panel.dispose() should have been called');
+      expect(showErrorMessageStub.firstCall.firstArg).to.eq('Could not resolve the dotnet path!');
+    });
+
+    test('should throw an error if it cannot find the extension', async function () {
+      const dotnetPath = 'road to nowhere';
+      const executeCommandStub = stub(commands, 'executeCommand').returns(Promise.resolve({ dotnetPath }));
+      const file = Uri.file(__filename);
+      const testHtml = '<span>hello world</span>';
+      const showErrorMessageStub = stub(window, 'showErrorMessage');
+      const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
+      const disposeSpy = spy();
+      const webview = { html: '' };
+      const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns({
+        webview,
+        dispose: disposeSpy,
+      } as unknown as WebviewPanel);
+      const getConfigurationStub = stub(workspace, 'getConfiguration').returns({
+        get(key: string) {
+          switch (key) {
+            case 'fileFormatVersion':
+              return '2010';
+              break;
+            case 'outPutFilePath':
+              return undefined;
+            default:
+              break;
+          }
+        },
+      } as unknown as WorkspaceConfiguration);
+      const getExtensionStub = stub(extensions, 'getExtension').returns(undefined as unknown as Extension<unknown>);
+
+      stubs.push(
+        executeCommandStub,
+        showErrorMessageStub,
+        getWebviewContentStub,
+        createWebviewPanelStub,
+        getConfigurationStub,
+        getExtensionStub,
+      );
+
+      await OOXMLValidator.validate(file);
+
+      expect(disposeSpy.called).to.eq(true, 'panel.dispose() should have been called');
+      expect(showErrorMessageStub.firstCall.firstArg).to.eq('Could not find OOXML Validate extension.');
+    });
+
+    test('should show an error and return if stderr has length', async function () {
+      const testHtml = '<span>hello world</span>';
+      const showErrorMessageStub = stub(window, 'showErrorMessage');
+      const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
+      const disposeSpy = spy();
+      const webview = { html: '' };
+      const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns({
+        webview,
+        dispose: disposeSpy,
+      } as unknown as WebviewPanel);
+      const getConfigurationStub = stub(workspace, 'getConfiguration').returns({
+        get(key: string) {
+          switch (key) {
+            case 'fileFormatVersion':
+              return '2010';
+              break;
+            case 'outPutFilePath':
+              return undefined;
+            default:
+              break;
+          }
+        },
+      } as unknown as WorkspaceConfiguration);
+      const file = Uri.file(__filename);
+
+      const extensionPath = 'foobar';
+      const getExtensionStub = stub(extensions, 'getExtension').returns({ extensionPath } as Extension<unknown>);
+
+      const dotnetPath = 'road to nowhere';
+      const executeCommandStub = stub(commands, 'executeCommand').returns(Promise.resolve({ dotnetPath }));
+
+      const errorMsg = 'on nooooo what happened?';
+      const spawnSyncStub = stub(child_process, 'spawnSync').returns({
+        stdout: Buffer.from(JSON.stringify([])),
+        stderr: Buffer.from(errorMsg),
+        pid: 7,
+        output: [null],
+        status: 13,
+        signal: null,
+      });
+
+      stubs.push(
+        showErrorMessageStub,
+        getWebviewContentStub,
+        createWebviewPanelStub,
+        getConfigurationStub,
+        getExtensionStub,
+        executeCommandStub,
+        spawnSyncStub,
+      );
+
+      await OOXMLValidator.validate(file);
+
+      expect(showErrorMessageStub.firstCall.firstArg).to.eq(`Failed to run OOXML Validator: ${errorMsg}`);
+    });
   });
 });
