@@ -175,9 +175,11 @@ suite('OOXMLValidator', function () {
           }
         },
       } as unknown as WorkspaceConfiguration);
-      const executeCommandStub = stub(commands, 'executeCommand').returns(Promise.resolve({ dotnetPath: 'tacocat' }));
-
+      const dotnetPath = 'road to nowhere';
       const extensionPath = 'foobar';
+
+      const executeCommandStub = stub(commands, 'executeCommand').returns(Promise.resolve({ dotnetPath }));
+
       const getExtensionStub = stub(extensions, 'getExtension').returns({ extensionPath } as Extension<unknown>);
 
       const spawnSyncStub = stub(child_process, 'spawnSync').returns({
@@ -200,6 +202,8 @@ suite('OOXMLValidator', function () {
       );
 
       const file = Uri.file(__filename);
+      const requestingExtensionId = 'mikeebowen.ooxml-validator-vscode';
+
       await OOXMLValidator.validate(file);
 
       expect(createWebviewPanelStub.firstCall.firstArg).to.eq('validateOOXML');
@@ -211,10 +215,16 @@ suite('OOXMLValidator', function () {
       expect(getWebviewContentStub.getCall(1).firstArg).to.deep.eq(validationErrors);
       expect(getWebviewContentStub.getCall(1).args[1]).to.eq(basename(file.fsPath));
       expect(getWebviewContentStub.getCall(1).args[2]).to.be.undefined;
-      expect(getExtensionStub.getCall(1).firstArg).to.eq('mikeebowen.ooxml-validator-vscode');
-      expect(spawnSyncStub.firstCall.args[0]).to.eq(extensionPath);
-      expect(spawnSyncStub.firstCall.args[1]).to.deep.eq([]);
       expect(webview.html).to.eq(testHtml);
+      expect(getExtensionStub.getCall(0).firstArg).to.eq(requestingExtensionId);
+      expect(executeCommandStub.getCall(0).firstArg).to.eq('dotnet.showAcquisitionLog');
+      expect(executeCommandStub.getCall(1).firstArg).to.eq('dotnet.acquire');
+      expect(executeCommandStub.getCall(2).lastArg).to.shallowDeepEqual({
+        command: dotnetPath,
+        arguments: ['foobar\\OOXMLValidator\\OOXMLValidatorCLI.dll'],
+      });
+      expect(spawnSyncStub.firstCall.args[0]).to.eq(dotnetPath);
+      expect(spawnSyncStub.firstCall.args[1]).to.shallowDeepEqual(['foobar\\OOXMLValidator\\OOXMLValidatorCLI.dll']);
     });
 
     // eslint-disable-next-line max-len
@@ -353,7 +363,31 @@ suite('OOXMLValidator', function () {
       } as unknown as WorkspaceConfiguration);
       const file = Uri.file(__filename);
 
-      stubs.push(showErrorMessageStub, getWebviewContentStub, createWebviewPanelStub, getConfigurationStub);
+      const extensionPath = 'foobar';
+      const getExtensionStub = stub(extensions, 'getExtension').returns({ extensionPath } as Extension<unknown>);
+
+      const requestingExtensionId = 'mikeebowen.ooxml-validator-vscode';
+      const dotnetPath = 'road to nowhere';
+      const executeCommandStub = stub(commands, 'executeCommand').returns(Promise.resolve({ dotnetPath }));
+
+      const spawnSyncStub = stub(child_process, 'spawnSync').returns({
+        stdout: Buffer.from(JSON.stringify([])),
+        stderr: Buffer.from(''),
+        pid: 7,
+        output: [null],
+        status: 13,
+        signal: null,
+      });
+
+      stubs.push(
+        showErrorMessageStub,
+        getWebviewContentStub,
+        createWebviewPanelStub,
+        getConfigurationStub,
+        getExtensionStub,
+        executeCommandStub,
+        spawnSyncStub,
+      );
 
       await OOXMLValidator.validate(file);
 
@@ -367,6 +401,15 @@ suite('OOXMLValidator', function () {
       expect(getWebviewContentStub.getCall(1).args[1]).to.eq(basename(file.fsPath));
       expect(getWebviewContentStub.getCall(1).args[2]).to.be.undefined;
       expect(webview.html).to.eq(testHtml);
+      expect(getExtensionStub.getCall(0).firstArg).to.eq(requestingExtensionId);
+      expect(executeCommandStub.getCall(0).firstArg).to.eq('dotnet.showAcquisitionLog');
+      expect(executeCommandStub.getCall(1).firstArg).to.eq('dotnet.acquire');
+      expect(executeCommandStub.getCall(2).lastArg).to.shallowDeepEqual({
+        command: dotnetPath,
+        arguments: ['foobar\\OOXMLValidator\\OOXMLValidatorCLI.dll'],
+      });
+      expect(spawnSyncStub.firstCall.args[0]).to.eq(dotnetPath);
+      expect(spawnSyncStub.firstCall.args[1]).to.shallowDeepEqual(['foobar\\OOXMLValidator\\OOXMLValidatorCLI.dll']);
     });
   });
 });
