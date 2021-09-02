@@ -1,4 +1,4 @@
-name: OOXML Validator VS Code Tests
+name: Unit Tests
 
 on:
   push:
