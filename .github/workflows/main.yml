@@ -32,11 +32,10 @@ jobs:
         uses: coverallsapp/github-action@master
         with:
           github-token: ${{ github.token }}
-        finish:
-          needs: test
-          steps:
-            - name: Deploy to VS Code Marketplace
-              if: success() && startsWith( github.ref, 'refs/tags/releases/') && matrix.os == 'ubuntu-latest'
-              if: success() && startsWith( github.ref, 'refs/tags/releases/') && matrix.os == 'ubuntu-latest'
-              env:
-                VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      finish:
+        needs: test
+        steps:
+          - name: Deploy to VS Code Marketplace
+            if: success() && startsWith( github.ref, 'refs/tags/releases/') && matrix.os == 'ubuntu-latest'
+            env:
+              VSCE_PAT: ${{ secrets.VSCE_PAT }}
