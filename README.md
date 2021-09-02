@@ -1,7 +1,7 @@
 [![Visual Studio Marketplace](https://vsmarketplacebadge.apphb.com/version-short/mikeebowen.ooxml-validator-vscode.svg)](https://marketplace.visualstudio.com/items?itemName=mikeebowen.ooxml-validator-vscode)
 [![Unit Tests](https://github.com/mikeebowen/ooxml-validator-vscode/actions/workflows/main.yml/badge.svg)](https://github.com/mikeebowen/ooxml-validator-vscode/actions/workflows/main.yml)
 [![Coverage Status](https://coveralls.io/repos/github/mikeebowen/ooxml-validator-vscode/badge.svg?branch=main)](https://coveralls.io/github/mikeebowen/ooxml-validator-vscode?branch=main)
-[![GitHub](https://img.shields.io/github/license/mikeebowen/ooxml-validator-vscode?label=license)](https://github.com/mikeebowen/ooxml-validator-vscode/blob/main/LICENSE)
+[![Project License](https://img.shields.io/github/license/mikeebowen/ooxml-validator-vscode?label=license)](https://github.com/mikeebowen/ooxml-validator-vscode/blob/main/LICENSE)
 
 # OOXML Validator VSCode Extension
 
