@@ -36,8 +36,14 @@ jobs:
     runs-on: ubuntu-latest
     needs: test
     steps:
-      - name: Publish
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 14
+          registry-url: https://registry.npmjs.org/
+      - name: Install vsce
+        run: npm i -g vsce
         if: github.event_name == 'release'
-        run: npm run deploy
-        env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      - name: Publish
+        run: vsce publish -p ${{ secrets.VSCE_PAT }}
+        if: github.event_name == 'release'
