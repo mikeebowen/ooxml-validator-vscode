@@ -37,7 +37,7 @@ jobs:
     needs: test
     steps:
       - name: Publish
-        if: startsWith( github.ref, 'refs/tags/releases/')
+        if: github.event_name == 'release'
         run: npm run deploy
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
