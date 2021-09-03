@@ -383,9 +383,17 @@ export default class OOXMLValidator {
         panel.webview.html = content;
       }
     } catch (error: any) {
-      const errMsg = error?.name?.includes('dotnet.')
-        ? 'The ".NET Install Tool for Extension Authors" VS Code extension\nMUST be installed for the OOXML Validator extension to work.'
-        : error.message || error;
+      let errMsg = error.message || error;
+
+      Object.values(error).some((e: any) => {
+        const str = e.toString && e.toString();
+        if (str && str.includes('dotnet.')) {
+          errMsg =
+            'The ".NET Install Tool for Extension Authors" VS Code extension\nMUST be installed for the OOXML Validator extension to work.';
+          return true;
+        }
+      });
+
       panel?.dispose();
       await window.showErrorMessage(errMsg, { modal: true });
     }
