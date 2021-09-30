@@ -110,7 +110,7 @@ export default class OOXMLValidator {
               <dt class="col-sm-3">Id</dt>
               <dd class="col-sm-9">${err.Id}</dd>
               <dt class="col-sm-3">Description</dt>
-              <dd class="col-sm-9">${err.Description}</dd>
+              <dd class="col-sm-9">${err.Description?.replace(/</g, '&lt;')}</dd>
               <dt class="col-sm-3">XPath</dt>
               <dd class="col-sm-9">
                 ${err.XPath}
