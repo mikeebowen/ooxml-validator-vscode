@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
-- List of possible elements expected is ommited [#4](https://github.com/mikeebowen/ooxml-validator-vscode/issues/4)
+- List of possible elements expected is omitted [#4](https://github.com/mikeebowen/ooxml-validator-vscode/issues/4)
 
 ### Added
 
