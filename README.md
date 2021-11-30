@@ -32,6 +32,7 @@ This extension contributes the following settings:
 - `ooxml.outPutFilePath`:
   String that specifies the absolute file path to write the output of the validator. If the file name does not end in ".json" or ".csv", ".csv" will be appended to the filename and saved as a .csv file. Path **MUST** be absolute. If no value is set, no log file will be saved.
 - `ooxml.overwriteLogFile`: If true, the log file will overwrite previous log files of the same name if they exist. If false, a unique timestamp is added to the filename. Default is false.
+- `ooxml.dotNetPath`: The absolute path to the .Net Runtime. Path **MUST** be absolute. If not set, the extension will use [.NET Install Tool for Extension Authors](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.vscode-dotnet-runtime) to download the .Net Runtime.
 
 ## Release Notes
 
