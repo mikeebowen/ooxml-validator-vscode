@@ -340,13 +340,17 @@ export default class OOXMLValidator {
       await commands.executeCommand('dotnet.showAcquisitionLog');
 
       const requestingExtensionId = 'mikeebowen.ooxml-validator-vscode';
-      const commandRes = await commands.executeCommand<IDotnetAcquireResult>('dotnet.acquire', {
-        version: '3.1',
-        requestingExtensionId,
-      });
-      const dotnetPath = commandRes!.dotnetPath;
+      let dotnetPath: string | undefined = workspace.getConfiguration('ooxml').get('dotNetPath');
+
       if (!dotnetPath) {
-        throw new Error('Could not resolve the dotnet path!');
+        const commandRes = await commands.executeCommand<IDotnetAcquireResult>('dotnet.acquire', {
+          version: '3.1',
+          requestingExtensionId,
+        });
+        dotnetPath = commandRes!.dotnetPath;
+        if (!dotnetPath) {
+          throw new Error('Could not resolve the dotnet path!');
+        }
       }
 
       const ooxmlValidateExtension = extensions.getExtension(requestingExtensionId);

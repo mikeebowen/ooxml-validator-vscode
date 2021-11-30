@@ -43,6 +43,10 @@
           "type": "boolean",
           "default": false,
           "description": "If true, the log file will overwrite previous log files of the same name if they exist, default is false."
+        },
+        "ooxml.dotNetPath": {
+          "type": "string",
+          "description": "The absolute path to the .Net Runtime"
         }
       }
     },
