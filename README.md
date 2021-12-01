@@ -9,7 +9,7 @@ The OOXML Validator validates Office Open XML files (.docx, .xlsx, .pptx) and di
 
 ## Features
 
-- Validates Office Open XML files against Office 2007, 2010, 2013, 2016, or 2019 _Defaults to 2019_
+- Validates Office Open XML files against Office 2007, 2010, 2013, 2016, 2019, or 2021 _Defaults to 2021_
 - Creates optional CSV or JSON log file of the errors.
 
 ## Requirements
@@ -28,7 +28,7 @@ To validate an OOXML file, right click on the file to validate and select "Valid
 
 This extension contributes the following settings:
 
-- `ooxml.fileFormatVersion`: Number that specifies the version of Office to use to validate OOXML files. Must be in `[2007, 2010, 2013, 2016, 2019]`. Defaults to 2019
+- `ooxml.fileFormatVersion`: Number that specifies the version of Office to use to validate OOXML files. Must be in `[2007, 2010, 2013, 2016, 2019, 2021]`. If no value is set or the value is not valid, defaults to 2021
 - `ooxml.outPutFilePath`:
   String that specifies the absolute file path to write the output of the validator. If the file name does not end in ".json" or ".csv", ".csv" will be appended to the filename and saved as a .csv file. Path **MUST** be absolute. If no value is set, no log file will be saved.
 - `ooxml.overwriteLogFile`: If true, the log file will overwrite previous log files of the same name if they exist. If false, a unique timestamp is added to the filename. Default is false.

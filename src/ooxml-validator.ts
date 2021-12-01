@@ -324,11 +324,12 @@ export default class OOXMLValidator {
     try {
       panel.webview.html = OOXMLValidator.getWebviewContent();
       const formatVersions: any = {
-        '2007': '1',
-        '2010': '2',
-        '2013': '4',
-        '2016': '8',
-        '2019': '16',
+        '2007': 'Office2006',
+        '2010': 'Office2010',
+        '2013': 'Office2013',
+        '2016': 'Office2016',
+        '2019': 'Office2019',
+        '2021': 'Office2021',
       };
       const configVersion: number | string | undefined = workspace.getConfiguration('ooxml').get('fileFormatVersion');
       const versionStr = configVersion?.toString();
@@ -366,7 +367,7 @@ export default class OOXMLValidator {
       const result = spawnSync(dotnetPath, ooxmlValidateArgs);
       const stderr = result?.stderr?.toString();
       if (stderr?.length > 0) {
-        window.showErrorMessage(`Failed to run OOXML Validator: ${stderr}`);
+        window.showErrorMessage(`Failed to run OOXML Validator. The error was:\n${stderr}`);
         return;
       }
 

@@ -524,7 +524,7 @@ suite('OOXMLValidator', function () {
       const dotnetPath = 'road to nowhere';
       const executeCommandStub = stub(commands, 'executeCommand').returns(Promise.resolve({ dotnetPath }));
 
-      const errorMsg = 'on nooooo what happened?';
+      const errorMsg = 'oh nooooo what happened?';
       const spawnSyncStub = stub(child_process, 'spawnSync').returns({
         stdout: Buffer.from(JSON.stringify([])),
         stderr: Buffer.from(errorMsg),
@@ -546,7 +546,7 @@ suite('OOXMLValidator', function () {
 
       await OOXMLValidator.validate(file);
 
-      expect(showErrorMessageStub.firstCall.firstArg).to.eq(`Failed to run OOXML Validator: ${errorMsg}`);
+      expect(showErrorMessageStub.firstCall.firstArg).to.eq(`Failed to run OOXML Validator. The error was:\n${errorMsg}`);
     });
 
     test('should prompt the user to instal the dotnet runtime extension if trying to call it throws an error', async function () {
