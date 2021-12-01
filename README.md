@@ -20,7 +20,7 @@ The OOXML Validator requires that the [.NET Install Tool for Extension Authors](
 
 To validate an OOXML file, right click on the file to validate and select "Validate OOXML". This displays the validation errors in the VS Code window. If `ooxml.outPutFilePath` is set, a log of the validation errors is created (defaults to .csv).
 
-![Demonstration of OOXML Viewer VS Code Extension](https://raw.githubusercontent.com/mikeebowen/ooxml-validator-vscode/main/assets/view-errors.gif)
+![Demonstration of OOXML Viewer VS Code Extension](https://raw.githubusercontent.com/mikeebowen/ooxml-validator-vscode/main/assets/view-errors-2.gif)
 
 <sup>\* Using [Excel Viewer](https://marketplace.visualstudio.com/items?itemName=GrapeCity.gc-excelviewer) to view the .csv file.</sup>
 
