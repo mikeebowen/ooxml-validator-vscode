@@ -102,7 +102,7 @@ export default class OOXMLValidator {
     }
   };
 
-  static getWebviewContent = (validationErrors?: ValidationError[], fileName?: string, path?: string): string => {
+  static getWebviewContent = (validationErrors?: ValidationError[], version?: string, fileName?: string, path?: string): string => {
     if (validationErrors && validationErrors.length) {
       let list = '';
       validationErrors.forEach(err => {
@@ -149,11 +149,12 @@ export default class OOXMLValidator {
               <div class="row pb-3">
                 <div class="col">
                   <h1>There Were ${validationErrors.length} Validation Errors Found</h1>
+                  <h2>Validating against ${version}</h2>
   ${
     path
-      ? `<h2>A log of these errors was saved as "${path}"</h2>`
+      ? `<h3>A log of these errors was saved as "${path}"</h3>`
       : // eslint-disable-next-line max-len
-      '<h2>No log of these errors was saved.</h2><h3>Set "ooxml.outPutFilePath" in settings.json to save a log (csv or json) of the errors</h3>'
+      '<h3>No log of these errors was saved.</h3><h4>Set "ooxml.outPutFilePath" in settings.json to save a log (csv or json) of the errors</h4>'
   }
                 </div>
               </div>
@@ -203,6 +204,7 @@ export default class OOXMLValidator {
                 <div class="col">
                 <div class="jumbotron">
                 <h1 class="display-4 text-center">No Errors Found!!</h1>
+                <h2>Validating Against ${version}</h2>
                 <p class="lead text-center">OOXML Validator did not find any validation errors in ${fileName}.</p>
               </div>
                 </div>
@@ -381,10 +383,10 @@ export default class OOXMLValidator {
         if (path) {
           pathToSavedFile = await OOXMLValidator.createLogFile(validationErrors, path);
         }
-        content = OOXMLValidator.getWebviewContent(validationErrors, basename(uri.fsPath), pathToSavedFile);
+        content = OOXMLValidator.getWebviewContent(validationErrors, version, basename(uri.fsPath), pathToSavedFile);
         panel.webview.html = content;
       } else {
-        content = OOXMLValidator.getWebviewContent([], basename(uri.fsPath));
+        content = OOXMLValidator.getWebviewContent([], version, basename(uri.fsPath));
         panel.webview.html = content;
       }
     } catch (error: any) {
