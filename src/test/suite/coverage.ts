@@ -15,6 +15,7 @@ import 'source-map-support/register';
 // Linux: prevent a weird NPE when mocha on Linux requires the window size from the TTY
 // Since we are not running in a tty environment, we just implementt he method statically
 const tty = require('tty');
+
 if (!tty.getWindowSize) {
   tty.getWindowSize = (): number[] => {
     return [80, 75];
@@ -44,6 +45,7 @@ export async function run(): Promise<void> {
   // (ideally, at this point the require cache should only contain one file - this module)
   const myFilesRegex = /vscode-recall\/out/;
   const filterFn = myFilesRegex.test.bind(myFilesRegex);
+
   if (Object.keys(require.cache).filter(filterFn).length > 1) {
     console.warn('NYC initialized after modules were loaded', Object.keys(require.cache).filter(filterFn));
   }
@@ -77,11 +79,15 @@ export async function run(): Promise<void> {
 async function captureStdout(fn: any) {
   let w = process.stdout.write,
     buffer = '';
+
   process.stdout.write = s => {
     buffer = buffer + s;
+    
     return true;
   };
+
   await fn();
   process.stdout.write = w;
+  
   return buffer;
 }

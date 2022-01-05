@@ -58,6 +58,7 @@ suite('OOXMLValidator', function () {
       const writeRecordsSpy = spy();
       const createObjectCsvWriterStub = stub(csvWriter, 'createObjectCsvWriter').callsFake((params: any): any => {
         expect(params?.path.endsWith('.csv')).to.eq(true, 'params?.path.endsWith');
+        
         return {
           writeRecords: writeRecordsSpy,
         };
@@ -165,13 +166,13 @@ suite('OOXMLValidator', function () {
       const getConfigurationStub = stub(workspace, 'getConfiguration').returns({
         get(key: string) {
           switch (key) {
-            case 'fileFormatVersion':
-              return 2010;
-              break;
-            case 'outPutFilePath':
-              return undefined;
-            default:
-              break;
+          case 'fileFormatVersion':
+            return 2010;
+            break;
+          case 'outPutFilePath':
+            return undefined;
+          default:
+            break;
           }
         },
       } as unknown as WorkspaceConfiguration);
@@ -275,13 +276,13 @@ suite('OOXMLValidator', function () {
       const getConfigurationStub = stub(workspace, 'getConfiguration').returns({
         get(key: string) {
           switch (key) {
-            case 'fileFormatVersion':
-              return '2013';
-              break;
-            case 'outPutFilePath':
-              return testFilePath;
-            default:
-              break;
+          case 'fileFormatVersion':
+            return '2013';
+            break;
+          case 'outPutFilePath':
+            return testFilePath;
+          default:
+            break;
           }
         },
       } as unknown as WorkspaceConfiguration);
@@ -356,13 +357,13 @@ suite('OOXMLValidator', function () {
       const getConfigurationStub = stub(workspace, 'getConfiguration').returns({
         get(key: string) {
           switch (key) {
-            case 'fileFormatVersion':
-              return '2019';
-              break;
-            case 'outPutFilePath':
-              return undefined;
-            default:
-              break;
+          case 'fileFormatVersion':
+            return '2019';
+            break;
+          case 'outPutFilePath':
+            return undefined;
+          default:
+            break;
           }
         },
       } as unknown as WorkspaceConfiguration);
@@ -434,13 +435,13 @@ suite('OOXMLValidator', function () {
       const getConfigurationStub = stub(workspace, 'getConfiguration').returns({
         get(key: string) {
           switch (key) {
-            case 'fileFormatVersion':
-              return '2010';
-              break;
-            case 'outPutFilePath':
-              return undefined;
-            default:
-              break;
+          case 'fileFormatVersion':
+            return '2010';
+            break;
+          case 'outPutFilePath':
+            return undefined;
+          default:
+            break;
           }
         },
       } as unknown as WorkspaceConfiguration);
@@ -469,13 +470,13 @@ suite('OOXMLValidator', function () {
       const getConfigurationStub = stub(workspace, 'getConfiguration').returns({
         get(key: string) {
           switch (key) {
-            case 'fileFormatVersion':
-              return '2010';
-              break;
-            case 'outPutFilePath':
-              return undefined;
-            default:
-              break;
+          case 'fileFormatVersion':
+            return '2010';
+            break;
+          case 'outPutFilePath':
+            return undefined;
+          default:
+            break;
           }
         },
       } as unknown as WorkspaceConfiguration);
@@ -509,13 +510,13 @@ suite('OOXMLValidator', function () {
       const getConfigurationStub = stub(workspace, 'getConfiguration').returns({
         get(key: string) {
           switch (key) {
-            case 'fileFormatVersion':
-              return '2010';
-              break;
-            case 'outPutFilePath':
-              return undefined;
-            default:
-              break;
+          case 'fileFormatVersion':
+            return '2010';
+            break;
+          case 'outPutFilePath':
+            return undefined;
+          default:
+            break;
           }
         },
       } as unknown as WorkspaceConfiguration);
