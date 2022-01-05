@@ -1,15 +1,15 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import { commands, Extension, extensions, Uri, ViewColumn, WebviewPanel, window, workspace, WorkspaceConfiguration } from 'vscode';
-import { SinonStub, spy, stub } from 'sinon';
 import { expect, use } from 'chai';
 import * as shallowDeepEqual from 'chai-shallow-deep-equal';
-import * as path from 'path';
 import * as child_process from 'child_process';
-import OOXMLValidator, { ValidationError, effEss, IValidationError } from '../../ooxml-validator';
-import { basename, normalize, join } from 'path';
-import { TextEncoder } from 'util';
 import * as csvWriter from 'csv-writer';
 import { isEqual } from 'lodash';
+import * as path from 'path';
+import { basename, join, normalize } from 'path';
+import { SinonStub, spy, stub } from 'sinon';
+import { TextEncoder } from 'util';
+import { commands, Extension, extensions, Uri, ViewColumn, WebviewPanel, window, workspace, WorkspaceConfiguration } from 'vscode';
+import OOXMLValidator, { effEss, IValidationError, ValidationError } from '../../ooxml-validator';
 
 use(shallowDeepEqual);
 
@@ -58,7 +58,7 @@ suite('OOXMLValidator', function () {
       const writeRecordsSpy = spy();
       const createObjectCsvWriterStub = stub(csvWriter, 'createObjectCsvWriter').callsFake((params: any): any => {
         expect(params?.path.endsWith('.csv')).to.eq(true, 'params?.path.endsWith');
-        
+
         return {
           writeRecords: writeRecordsSpy,
         };
@@ -564,7 +564,8 @@ suite('OOXMLValidator', function () {
       await OOXMLValidator.validate(file);
 
       expect(showErrorMessageStub.firstCall.firstArg).to.eq(
-        'The ".NET Install Tool for Extension Authors" VS Code extension\nMUST be installed for the OOXML Validator extension to work.',
+        // eslint-disable-next-line max-len
+        'The ".NET Install Tool for Extension Authors" VS Code extensionMUST be installed\nor the ooxml.dotNetPath must be set to th absolute path to the .Net Runtime\nfor the OOXML Validator extension to work.',
       );
       expect(showErrorMessageStub.firstCall.lastArg).to.deep.eq({ modal: true });
     });

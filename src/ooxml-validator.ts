@@ -343,7 +343,7 @@ export default class OOXMLValidator {
 
       const configVersion: number | string | undefined = workspace.getConfiguration('ooxml').get('fileFormatVersion');
       const versionStr = configVersion?.toString();
-      const versions = Object.keys(formatVersions);
+      const versions = [...formatVersions.keys()];
       // Default to the latest format version
       const version =
         versionStr && versions.includes(versionStr) ? formatVersions.get(versionStr) : [...formatVersions.values()].pop();
