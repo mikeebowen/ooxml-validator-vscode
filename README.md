@@ -14,7 +14,7 @@ The OOXML Validator validates Office Open XML files (.docx, .xlsx, .pptx) and di
 
 ## Requirements
 
-The OOXML Validator requires that the [.NET Install Tool for Extension Authors](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.vscode-dotnet-runtime) VS Code extension be installed.
+The OOXML Validator requires that either the [.NET Install Tool for Extension Authors](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.vscode-dotnet-runtime) VS Code extension be installed or the `ooxml.dotNetPath` must be set in settings.json to the absolute path to the .Net Runtime.
 
 ## Usage
 
@@ -28,7 +28,7 @@ To validate an OOXML file, right click on the file to validate and select "Valid
 
 This extension contributes the following settings:
 
-- `ooxml.fileFormatVersion`: Number that specifies the version of Office to use to validate OOXML files. Must be in `[2007, 2010, 2013, 2016, 2019, 2021]`. If no value is set or the value is not valid, defaults to 2021
+- `ooxml.fileFormatVersion`: Number that specifies the version of Office to use to validate OOXML files. Must be in `[2007, 2010, 2013, 2016, 2019, 2021, 365]`. If no value is set or the value is not valid, defaults to 365. For the Office version 365 refers to the subscription product (Microsoft 365), while the other versions refer the perpetual versions for a given year.
 - `ooxml.outPutFilePath`:
   String that specifies the absolute file path to write the output of the validator. If the file name does not end in ".json" or ".csv", ".csv" will be appended to the filename and saved as a .csv file. Path **MUST** be absolute. If no value is set, no log file will be saved.
 - `ooxml.overwriteLogFile`: If true, the new log file will overwrite previous log file of the same name if it exists. If false, a unique timestamp is added to the filename. Default is false.

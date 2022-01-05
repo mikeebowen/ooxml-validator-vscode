@@ -331,20 +331,22 @@ export default class OOXMLValidator {
 
     try {
       panel.webview.html = OOXMLValidator.getWebviewContent();
-      const formatVersions: any = {
-        '2007': 'Office2006',
-        '2010': 'Office2010',
-        '2013': 'Office2013',
-        '2016': 'Office2016',
-        '2019': 'Office2019',
-        '2021': 'Office2021',
-      };
+
+      const formatVersions: Map<string, string> = new  Map();
+      formatVersions.set('2007', 'Office2006');
+      formatVersions.set('2010', 'Office2010');
+      formatVersions.set('2013', 'Office2013');
+      formatVersions.set('2016', 'Office2016');
+      formatVersions.set('2019', 'Office2019');
+      formatVersions.set('2021', 'Office2021');
+      formatVersions.set('365', 'Microsoft365');
+
       const configVersion: number | string | undefined = workspace.getConfiguration('ooxml').get('fileFormatVersion');
       const versionStr = configVersion?.toString();
       const versions = Object.keys(formatVersions);
       // Default to the latest format version
       const version =
-        versionStr && versions.includes(versionStr) ? formatVersions[versionStr] : formatVersions[versions[versions.length - 1]];
+        versionStr && versions.includes(versionStr) ? formatVersions.get(versionStr) : [...formatVersions.values()].pop();
 
       await commands.executeCommand('dotnet.showAcquisitionLog');
 
@@ -375,7 +377,7 @@ export default class OOXMLValidator {
       // This will install any missing Linux dependencies.
       await commands.executeCommand('dotnet.ensureDotnetDependencies', { command: dotnetPath, arguments: ooxmlValidateArgs });
 
-      const result = spawnSync(dotnetPath, ooxmlValidateArgs);
+      const result = spawnSync(dotnetPath, ooxmlValidateArgs as string[]);
       const stderr = result?.stderr?.toString();
 
       if (stderr?.length > 0) {
@@ -410,7 +412,9 @@ export default class OOXMLValidator {
 
         if (str && str.includes('dotnet.')) {
           errMsg =
-            'The ".NET Install Tool for Extension Authors" VS Code extension\nMUST be installed for the OOXML Validator extension to work.';
+            // eslint-disable-next-line max-len
+            'The ".NET Install Tool for Extension Authors" VS Code extensionMUST be installed\nor the ooxml.dotNetPath must be set to th absolute path to the .Net Runtime\nfor the OOXML Validator extension to work.';
+
           return true;
         }
       });
