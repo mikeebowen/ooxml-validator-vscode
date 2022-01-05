@@ -8,7 +8,7 @@
     ".NETCoreApp,Version=v3.1": {
       "OOXMLValidatorCLI/1.0.0": {
         "dependencies": {
-          "DocumentFormat.OpenXml": "2.14.0",
+          "DocumentFormat.OpenXml": "2.15.0",
           "Microsoft.Extensions.DependencyInjection": "6.0.0",
           "Newtonsoft.Json": "13.0.1"
         },
@@ -16,14 +16,14 @@
           "OOXMLValidatorCLI.dll": {}
         }
       },
-      "DocumentFormat.OpenXml/2.14.0": {
+      "DocumentFormat.OpenXml/2.15.0": {
         "dependencies": {
           "System.IO.Packaging": "4.7.0"
         },
         "runtime": {
           "lib/netstandard2.0/DocumentFormat.OpenXml.dll": {
-            "assemblyVersion": "2.14.0.0",
-            "fileVersion": "2.14.0.0"
+            "assemblyVersion": "2.15.0.0",
+            "fileVersion": "2.15.0.0"
           }
         }
       },
@@ -79,12 +79,12 @@
       "serviceable": false,
       "sha512": ""
     },
-    "DocumentFormat.OpenXml/2.14.0": {
+    "DocumentFormat.OpenXml/2.15.0": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-efqKeJ8gJwTD27cKwW60pG/JpelkVlsexNN7yWQ8e12urfEwUdHhlQEaQlNapEFGyxqzr4/Ys/5Snt5rjhw3sA==",
-      "path": "documentformat.openxml/2.14.0",
-      "hashPath": "documentformat.openxml.2.14.0.nupkg.sha512"
+      "sha512": "sha512-ymfVWFza7DScxwGXRjqevoOe/UoZdaZsbdzEHlkq3nzyQmMwoD04KQwlE8qw3iUAmIn7r3PjEaqQZ4JtuQj35A==",
+      "path": "documentformat.openxml/2.15.0",
+      "hashPath": "documentformat.openxml.2.15.0.nupkg.sha512"
     },
     "Microsoft.Extensions.DependencyInjection/6.0.0": {
       "type": "package",
