@@ -8,24 +8,52 @@
   "plugins": ["@typescript-eslint"],
   "rules": {
     "@typescript-eslint/naming-convention": "warn",
-    "@typescript-eslint/semi": "warn",
+    "semi": "off",
+    "@typescript-eslint/semi": "error",
+    "@typescript-eslint/member-delimiter-style": [
+      "warn",
+      {
+        "multiline": {
+          "delimiter": "semi",
+          "requireLast": true
+        },
+        "singleline": {
+          "delimiter": "semi",
+          "requireLast": false
+        }
+      }
+    ],
+    "keyword-spacing": "error",
+    // add padding before and after statements
+    "padding-line-between-statements": [
+      "warn",
+      { "blankLine": "always", "prev": "*", "next": "block" },
+      { "blankLine": "always", "prev": "block", "next": "*" },
+      { "blankLine": "always", "prev": "*", "next": "block-like" },
+      { "blankLine": "always", "prev": "block-like", "next": "*" }
+    ],
+    "newline-before-return": "error",
     "curly": "warn",
     "eqeqeq": "warn",
     "no-throw-literal": "warn",
     "prefer-const": "warn",
     "@typescript-eslint/no-unused-vars": ["warn", { "args": "none" }],
-    "comma-dangle": [
+    "comma-dangle": "off",
+    "@typescript-eslint/comma-dangle": [
       "error",
       {
         "arrays": "always-multiline",
         "objects": "always-multiline",
         "imports": "never",
         "exports": "always-multiline",
-        "functions": "always-multiline"
+        "functions": "always-multiline",
+        "enums": "always-multiline",
+        "generics": "always-multiline",
+        "tuples": "always-multiline"
       }
     ],
     "func-call-spacing": ["error", "never"],
-    "indent": ["error", 2, { "SwitchCase": 1 }],
+    "indent": ["error", 2],
     "max-len": [
       "warn",
       {
@@ -39,7 +67,6 @@
     "no-console": ["warn", { "allow": ["warn", "error"] }],
     "no-unused-vars": "off",
     "quotes": ["error", "single", { "avoidEscape": true }],
-    "semi": ["error", "always"],
     "space-in-parens": ["error", "never"],
     "newline-per-chained-call": ["error", { "ignoreChainWithDepth": 3 }]
   }

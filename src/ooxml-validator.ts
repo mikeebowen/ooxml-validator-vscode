@@ -1,21 +1,21 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import { Uri, ViewColumn, WebviewPanel, window, workspace, commands, extensions } from 'vscode';
-import { dirname, basename, isAbsolute, normalize, extname, join } from 'path';
-import { TextEncoder } from 'util';
 import { spawnSync } from 'child_process';
 import { createObjectCsvWriter } from 'csv-writer';
+import { basename, dirname, extname, isAbsolute, join, normalize } from 'path';
+import { TextEncoder } from 'util';
+import { commands, extensions, Uri, ViewColumn, WebviewPanel, window, workspace } from 'vscode';
 import { IDotnetAcquireResult } from './models/IDotnetAcquireResult';
 
 export interface IValidationError {
-  Description?: string
+  Description?: string;
   Path?: {
-    NamespacesDefinitions?: string[]
-    Namespaces: any
-    XPath?: string
-    PartUri?: string
-  }
-  Id?: string
-  ErrorType?: number
+    NamespacesDefinitions?: string[];
+    Namespaces: any;
+    XPath?: string;
+    PartUri?: string;
+  };
+  Id?: string;
+  ErrorType?: number;
 }
 
 export class ValidationError {
@@ -39,8 +39,8 @@ export class ValidationError {
 }
 
 interface IHeader {
-  id: string
-  title: string
+  id: string;
+  title: string;
 }
 
 class Header {
@@ -61,6 +61,7 @@ export default class OOXMLValidator {
   static createLogFile = async (validationErrors: ValidationError[], path: string): Promise<string | undefined> => {
     let normalizedPath = normalize(path);
     let ext = extname(basename(normalizedPath));
+
     if (ext !== '.csv' && ext !== '.json') {
       normalizedPath = `${normalizedPath}.csv`;
       ext = '.csv';
@@ -75,6 +76,7 @@ export default class OOXMLValidator {
           .toISOString()
           .replaceAll(':', '_')}${ext}`;
       }
+
       if (ext === '.json') {
         const encoder = new TextEncoder();
         await effEss.writeFile(Uri.file(normalizedPath), encoder.encode(JSON.stringify(validationErrors, null, 2)));
@@ -86,10 +88,12 @@ export default class OOXMLValidator {
 
         const errorsForCsv = validationErrors.map((ve: ValidationError) => {
           const copy = Object.assign({}, ve);
+
           for (const [key, value] of Object.entries(copy)) {
             const k = key as 'Id' | 'Description' | 'Namespaces' | 'NamespacesDefinitions' | 'XPath' | 'PartUri' | 'ErrorType';
             copy[k] = JSON.stringify(value, null, 2);
           }
+
           return copy;
         });
 
@@ -125,6 +129,7 @@ export default class OOXMLValidator {
               </dd>
             </dl>`;
       });
+
       return `<!DOCTYPE html>
         <html lang="en">
         <head>
@@ -150,12 +155,11 @@ export default class OOXMLValidator {
                 <div class="col">
                   <h1>There Were ${validationErrors.length} Validation Errors Found</h1>
                   <h2>Validating against ${version}</h2>
-  ${
-    path
-      ? `<h3>A log of these errors was saved as "${path}"</h3>`
-      : // eslint-disable-next-line max-len
-      '<h3>No log of these errors was saved.</h3><h4>Set "ooxml.outPutFilePath" in settings.json to save a log (csv or json) of the errors</h4>'
-  }
+  ${path
+        ? `<h3>A log of these errors was saved as "${path}"</h3>`
+        : // eslint-disable-next-line max-len
+        '<h3>No log of these errors was saved.</h3><h4>Set "ooxml.outPutFilePath" in settings.json to save a log (csv or json) of the errors</h4>'
+        }
                 </div>
               </div>
               <div class="row pb-3">
@@ -213,6 +217,7 @@ export default class OOXMLValidator {
           </body>
         </html>`;
     }
+
     return `<!DOCTYPE html>
             <html lang="en">
             <head>
@@ -323,6 +328,7 @@ export default class OOXMLValidator {
 
   static validate = async (uri: Uri) => {
     const panel: WebviewPanel = window.createWebviewPanel('validateOOXML', 'OOXML Validate', ViewColumn.One, { enableScripts: true });
+
     try {
       panel.webview.html = OOXMLValidator.getWebviewContent();
       const formatVersions: any = {
@@ -351,15 +357,18 @@ export default class OOXMLValidator {
           requestingExtensionId,
         });
         dotnetPath = commandRes!.dotnetPath;
+
         if (!dotnetPath) {
           throw new Error('Could not resolve the dotnet path!');
         }
       }
 
       const ooxmlValidateExtension = extensions.getExtension(requestingExtensionId);
+
       if (!ooxmlValidateExtension) {
         throw new Error('Could not find OOXML Validate extension.');
       }
+
       const ooxmlValidateLocation = join(ooxmlValidateExtension.extensionPath, 'OOXMLValidator', 'OOXMLValidatorCLI.dll');
       const ooxmlValidateArgs = [ooxmlValidateLocation, uri.fsPath, version];
 
@@ -368,8 +377,10 @@ export default class OOXMLValidator {
 
       const result = spawnSync(dotnetPath, ooxmlValidateArgs);
       const stderr = result?.stderr?.toString();
+
       if (stderr?.length > 0) {
         window.showErrorMessage(`Failed to run OOXML Validator. The error was:\n${stderr}`);
+
         return;
       }
 
@@ -380,9 +391,11 @@ export default class OOXMLValidator {
       if (validationErrors.length) {
         const path: string | undefined = workspace.getConfiguration('ooxml').get('outPutFilePath');
         let pathToSavedFile: string | undefined;
+
         if (path) {
           pathToSavedFile = await OOXMLValidator.createLogFile(validationErrors, path);
         }
+
         content = OOXMLValidator.getWebviewContent(validationErrors, version, basename(uri.fsPath), pathToSavedFile);
         panel.webview.html = content;
       } else {
@@ -394,6 +407,7 @@ export default class OOXMLValidator {
 
       Object.values(error).some((e: any) => {
         const str = e.toString && e.toString();
+
         if (str && str.includes('dotnet.')) {
           errMsg =
             'The ".NET Install Tool for Extension Authors" VS Code extension\nMUST be installed for the OOXML Validator extension to work.';
