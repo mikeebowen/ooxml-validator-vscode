@@ -102,7 +102,7 @@ export default class OOXMLValidator {
     }
   };
 
-  static getWebviewContent = (validationErrors?: ValidationError[], fileName?: string, path?: string): string => {
+  static getWebviewContent = (validationErrors?: ValidationError[], version?: string, fileName?: string, path?: string): string => {
     if (validationErrors && validationErrors.length) {
       let list = '';
       validationErrors.forEach(err => {
@@ -110,7 +110,7 @@ export default class OOXMLValidator {
               <dt class="col-sm-3">Id</dt>
               <dd class="col-sm-9">${err.Id}</dd>
               <dt class="col-sm-3">Description</dt>
-              <dd class="col-sm-9">${err.Description}</dd>
+              <dd class="col-sm-9">${err.Description?.replace(/</g, '&lt;')}</dd>
               <dt class="col-sm-3">XPath</dt>
               <dd class="col-sm-9">
                 ${err.XPath}
@@ -149,11 +149,12 @@ export default class OOXMLValidator {
               <div class="row pb-3">
                 <div class="col">
                   <h1>There Were ${validationErrors.length} Validation Errors Found</h1>
+                  <h2>Validating against ${version}</h2>
   ${
     path
-      ? `<h2>A log of these errors was saved as "${path}"</h2>`
+      ? `<h3>A log of these errors was saved as "${path}"</h3>`
       : // eslint-disable-next-line max-len
-      '<h2>No log of these errors was saved.</h2><h3>Set "ooxml.outPutFilePath" in settings.json to save a log (csv or json) of the errors</h3>'
+      '<h3>No log of these errors was saved.</h3><h4>Set "ooxml.outPutFilePath" in settings.json to save a log (csv or json) of the errors</h4>'
   }
                 </div>
               </div>
@@ -203,6 +204,7 @@ export default class OOXMLValidator {
                 <div class="col">
                 <div class="jumbotron">
                 <h1 class="display-4 text-center">No Errors Found!!</h1>
+                <h2>Validating Against ${version}</h2>
                 <p class="lead text-center">OOXML Validator did not find any validation errors in ${fileName}.</p>
               </div>
                 </div>
@@ -324,11 +326,12 @@ export default class OOXMLValidator {
     try {
       panel.webview.html = OOXMLValidator.getWebviewContent();
       const formatVersions: any = {
-        '2007': '1',
-        '2010': '2',
-        '2013': '4',
-        '2016': '8',
-        '2019': '16',
+        '2007': 'Office2006',
+        '2010': 'Office2010',
+        '2013': 'Office2013',
+        '2016': 'Office2016',
+        '2019': 'Office2019',
+        '2021': 'Office2021',
       };
       const configVersion: number | string | undefined = workspace.getConfiguration('ooxml').get('fileFormatVersion');
       const versionStr = configVersion?.toString();
@@ -340,13 +343,17 @@ export default class OOXMLValidator {
       await commands.executeCommand('dotnet.showAcquisitionLog');
 
       const requestingExtensionId = 'mikeebowen.ooxml-validator-vscode';
-      const commandRes = await commands.executeCommand<IDotnetAcquireResult>('dotnet.acquire', {
-        version: '3.1',
-        requestingExtensionId,
-      });
-      const dotnetPath = commandRes!.dotnetPath;
+      let dotnetPath: string | undefined = workspace.getConfiguration('ooxml').get('dotNetPath');
+
       if (!dotnetPath) {
-        throw new Error('Could not resolve the dotnet path!');
+        const commandRes = await commands.executeCommand<IDotnetAcquireResult>('dotnet.acquire', {
+          version: '3.1',
+          requestingExtensionId,
+        });
+        dotnetPath = commandRes!.dotnetPath;
+        if (!dotnetPath) {
+          throw new Error('Could not resolve the dotnet path!');
+        }
       }
 
       const ooxmlValidateExtension = extensions.getExtension(requestingExtensionId);
@@ -362,7 +369,7 @@ export default class OOXMLValidator {
       const result = spawnSync(dotnetPath, ooxmlValidateArgs);
       const stderr = result?.stderr?.toString();
       if (stderr?.length > 0) {
-        window.showErrorMessage(`Failed to run OOXML Validator: ${stderr}`);
+        window.showErrorMessage(`Failed to run OOXML Validator. The error was:\n${stderr}`);
         return;
       }
 
@@ -376,10 +383,10 @@ export default class OOXMLValidator {
         if (path) {
           pathToSavedFile = await OOXMLValidator.createLogFile(validationErrors, path);
         }
-        content = OOXMLValidator.getWebviewContent(validationErrors, basename(uri.fsPath), pathToSavedFile);
+        content = OOXMLValidator.getWebviewContent(validationErrors, version, basename(uri.fsPath), pathToSavedFile);
         panel.webview.html = content;
       } else {
-        content = OOXMLValidator.getWebviewContent([], basename(uri.fsPath));
+        content = OOXMLValidator.getWebviewContent([], version, basename(uri.fsPath));
         panel.webview.html = content;
       }
     } catch (error: any) {
