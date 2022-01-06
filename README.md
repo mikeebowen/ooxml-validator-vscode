@@ -9,7 +9,7 @@ The OOXML Validator validates Office Open XML files (.docx, .xlsx, .pptx) and di
 
 ## Features
 
-- Validates Office Open XML files against Office 2007, 2010, 2013, 2016, 2019, or 2021 _Defaults to 2021_
+- Validates Office Open XML files against Office Perpetual 2007, 2010, 2013, 2016, 2019, 2021, or Microsoft 365 Subscription _Defaults to Microsoft 365 Subscription_
 - Creates optional CSV or JSON log file of the errors.
 
 ## Requirements

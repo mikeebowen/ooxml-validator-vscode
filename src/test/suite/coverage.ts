@@ -1,16 +1,16 @@
-import * as path from 'path';
-import * as Mocha from 'mocha';
-const NYC = require('nyc');
-import * as glob from 'glob';
-
 // Simulates the recommended config option
 // extends: "@istanbuljs/nyc-config-typescript",
 import * as baseConfig from '@istanbuljs/nyc-config-typescript';
-
+import * as glob from 'glob';
+import * as Mocha from 'mocha';
+import * as path from 'path';
+import 'source-map-support/register';
 // Recommended modules, loading them here to speed up NYC init
 // and minimize risk of race condition
 import 'ts-node/register';
-import 'source-map-support/register';
+const NYC = require('nyc');
+
+
 
 // Linux: prevent a weird NPE when mocha on Linux requires the window size from the TTY
 // Since we are not running in a tty environment, we just implementt he method statically
@@ -69,6 +69,7 @@ export async function run(): Promise<void> {
   await nyc.writeCoverageFile();
 
   // Capture text-summary reporter's output and log it in console
+  // eslint-disable-next-line no-console
   console.log(await captureStdout(nyc.report.bind(nyc)));
 
   if (failures > 0) {
@@ -77,17 +78,18 @@ export async function run(): Promise<void> {
 }
 
 async function captureStdout(fn: any) {
+  // eslint-disable-next-line prefer-const
   let w = process.stdout.write,
     buffer = '';
 
   process.stdout.write = s => {
     buffer = buffer + s;
-    
+
     return true;
   };
 
   await fn();
   process.stdout.write = w;
-  
+
   return buffer;
 }
