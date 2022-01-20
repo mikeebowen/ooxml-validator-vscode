@@ -65,9 +65,22 @@
       {
         "id": "ooxml",
         "extensions": [
-          ".docx",
-          ".pptx",
-          ".xlsx"
+          "docx",
+          "docm",
+          "dotm",
+          "dotx",
+          "pptx",
+          "pptm",
+          "potm",
+          "potx",
+          "ppam",
+          "ppsm",
+          "ppsx",
+          "xlsx",
+          "xlsm",
+          "xltm",
+          "xltx",
+          "xlam"
         ]
       }
     ],

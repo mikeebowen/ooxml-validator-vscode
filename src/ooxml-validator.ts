@@ -381,7 +381,8 @@ export default class OOXMLValidator {
       const stderr = result?.stderr?.toString();
 
       if (stderr?.length > 0) {
-        window.showErrorMessage(`Failed to run OOXML Validator. The error was:\n${stderr}`);
+        window.showErrorMessage(`Failed to run OOXML Validator. The error was:\n${stderr}`, { modal: true });
+        panel.dispose();
 
         return;
       }
