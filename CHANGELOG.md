@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2022-01-20
+
+### Added
+- Validation for .docm, .dotm, .dotx, .pptm, .potm, .potx, .ppam, .ppsm, .ppsx, .xlsm, .xltm, .xltx, and .xlam files, closes [#8](https://github.com/mikeebowen/ooxml-validator-vscode/issues/8)
+- CLI errors show in modal window
+
+### Fixed
+- Web Panel closes if there is an error from the CLI
+
 ## [1.3.1] - 2022-01-06
 
 ### Fixed
