@@ -9,7 +9,8 @@ import { basename, join, normalize } from 'path';
 import { SinonStub, spy, stub } from 'sinon';
 import { TextEncoder } from 'util';
 import { commands, Extension, extensions, Uri, ViewColumn, WebviewPanel, window, workspace, WorkspaceConfiguration } from 'vscode';
-import OOXMLValidator, { effEss, IValidationError, ValidationError } from '../../ooxml-validator';
+import { IValidationError, ValidationError } from '../../models';
+import OOXMLValidator, { effEss } from '../../ooxml-validator';
 
 use(shallowDeepEqual);
 
