@@ -1,56 +1,10 @@
-/* eslint-disable @typescript-eslint/naming-convention */
 import { spawnSync } from 'child_process';
 import { createObjectCsvWriter } from 'csv-writer';
 import { basename, dirname, extname, isAbsolute, join, normalize } from 'path';
 import { TextEncoder } from 'util';
 import { commands, extensions, Uri, ViewColumn, WebviewPanel, window, workspace } from 'vscode';
-import { IDotnetAcquireResult } from './models/IDotnetAcquireResult';
+import { Header, IDotnetAcquireResult, IValidationError, ValidationError } from './models';
 
-export interface IValidationError {
-  Description?: string;
-  Path?: {
-    NamespacesDefinitions?: string[];
-    Namespaces: any;
-    XPath?: string;
-    PartUri?: string;
-  };
-  Id?: string;
-  ErrorType?: number;
-}
-
-export class ValidationError {
-  Description?: string;
-  NamespacesDefinitions?: string[] | undefined;
-  Namespaces: any;
-  XPath?: string;
-  PartUri?: string;
-  Id?: string;
-  ErrorType?: number;
-
-  constructor(options: IValidationError) {
-    this.Id = options.Id;
-    this.Description = options.Description;
-    this.Namespaces = options.Path?.Namespaces;
-    this.NamespacesDefinitions = options.Path?.NamespacesDefinitions;
-    this.XPath = options.Path?.XPath;
-    this.PartUri = options.Path?.PartUri;
-    this.ErrorType = options.ErrorType;
-  }
-}
-
-interface IHeader {
-  id: string;
-  title: string;
-}
-
-class Header {
-  id: string;
-  title: string;
-  constructor(options: IHeader) {
-    this.id = options.id;
-    this.title = options.title;
-  }
-}
 // wrapping methods to make stubbing for tests easier
 export const effEss = {
   createDirectory: workspace.fs.createDirectory,
@@ -87,7 +41,7 @@ export default class OOXMLValidator {
         });
 
         const errorsForCsv = validationErrors.map((ve: ValidationError) => {
-          const copy = Object.assign({}, ve);
+          const copy: {[key: string]: any} = Object.assign({}, ve);
 
           for (const [key, value] of Object.entries(copy)) {
             const k = key as 'Id' | 'Description' | 'Namespaces' | 'NamespacesDefinitions' | 'XPath' | 'PartUri' | 'ErrorType';
