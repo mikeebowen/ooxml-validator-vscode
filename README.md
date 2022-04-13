@@ -37,5 +37,6 @@ This extension contributes the following settings:
 ## Release Notes
 
 Please see the [Changelog](CHANGELOG.md)
+
 ---
 <p align="right">Logo created with <a href="https://logomakr.com/">Logomakr.com</a></p>
