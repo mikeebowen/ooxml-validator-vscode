@@ -39,4 +39,4 @@ This extension contributes the following settings:
 Please see the [Changelog](CHANGELOG.md)
 
 ---
-<p align="right">Logo created with <a href="https://logomakr.com/">Logomakr.com</a></p>
+<p align="right">Logo created with <a href="https://logomakr.com/">LogoMakr.com</a></p>
