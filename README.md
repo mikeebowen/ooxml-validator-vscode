@@ -3,7 +3,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/mikeebowen/ooxml-validator-vscode/badge.svg?branch=main)](https://coveralls.io/github/mikeebowen/ooxml-validator-vscode?branch=main)
 [![Project License](https://img.shields.io/github/license/mikeebowen/ooxml-validator-vscode?label=license)](https://github.com/mikeebowen/ooxml-validator-vscode/blob/main/LICENSE)
 
-# OOXML Validator VSCode Extension
+# OOXML Validator VS Code Extension
 
 The OOXML Validator validates Office Open XML files (.docx, .docm, .dotm, .dotx, .pptx, .pptm, .potm, .potx, .ppam, .ppsm, .ppsx, .xlsx, .xlsm, .xltm, .xltx, or .xlam) and displays the validation errors found in the xml parts in VSCode and creates an optional CSV or JSON log file of the validation errors.
 
