@@ -287,7 +287,7 @@ export default class OOXMLValidator {
       panel.webview.html = OOXMLValidator.getWebviewContent();
 
       const formatVersions: Map<string, string> = new  Map();
-      formatVersions.set('2007', 'Office2006');
+      formatVersions.set('2007', 'Office2007');
       formatVersions.set('2010', 'Office2010');
       formatVersions.set('2013', 'Office2013');
       formatVersions.set('2016', 'Office2016');
