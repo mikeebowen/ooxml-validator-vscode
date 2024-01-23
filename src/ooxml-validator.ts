@@ -2,7 +2,7 @@ import { spawnSync } from 'child_process';
 import { createObjectCsvWriter } from 'csv-writer';
 import { basename, dirname, extname, isAbsolute, join, normalize } from 'path';
 import { TextEncoder } from 'util';
-import { commands, extensions, Uri, ViewColumn, WebviewPanel, window, workspace } from 'vscode';
+import { Uri, ViewColumn, WebviewPanel, commands, extensions, window, workspace } from 'vscode';
 import { Header, IDotnetAcquireResult, IValidationError, ValidationError } from './models';
 
 // wrapping methods to make stubbing for tests easier
@@ -41,7 +41,7 @@ export default class OOXMLValidator {
         });
 
         const errorsForCsv = validationErrors.map((ve: ValidationError) => {
-          const copy: {[key: string]: any} = Object.assign({}, ve);
+          const copy: { [key: string]: any } = Object.assign({}, ve);
 
           for (const [key, value] of Object.entries(copy)) {
             const k = key as 'Id' | 'Description' | 'Namespaces' | 'NamespacesDefinitions' | 'XPath' | 'PartUri' | 'ErrorType';
@@ -286,7 +286,7 @@ export default class OOXMLValidator {
     try {
       panel.webview.html = OOXMLValidator.getWebviewContent();
 
-      const formatVersions: Map<string, string> = new  Map();
+      const formatVersions: Map<string, string> = new Map();
       formatVersions.set('2007', 'Office2007');
       formatVersions.set('2010', 'Office2010');
       formatVersions.set('2013', 'Office2013');
@@ -309,7 +309,7 @@ export default class OOXMLValidator {
 
       if (!dotnetPath) {
         const commandRes = await commands.executeCommand<IDotnetAcquireResult>('dotnet.acquire', {
-          version: '3.1',
+          version: '8.0',
           requestingExtensionId,
         });
         dotnetPath = commandRes!.dotnetPath;
