@@ -1,4 +1,5 @@
-[![VS Marketplace](https://vsmarketplacebadges.dev/version-short/mikeebowen.ooxml-validator-vscode.svg)](https://marketplace.visualstudio.com/items?itemName=mikeebowen.ooxml-validator-vscode)
+[![VS Marketplace](https://img.shields.io/visual-studio-marketplace/v/mikeebowen.ooxml-validator-vscode?label=VS%20Marketplace&color=green
+)](https://marketplace.visualstudio.com/items?itemName=mikeebowen.ooxml-validator-vscode)
 [![Unit Tests](https://github.com/mikeebowen/ooxml-validator-vscode/actions/workflows/main.yml/badge.svg)](https://github.com/mikeebowen/ooxml-validator-vscode/actions/workflows/main.yml)
 [![Coverage Status](https://coveralls.io/repos/github/mikeebowen/ooxml-validator-vscode/badge.svg?branch=main)](https://coveralls.io/github/mikeebowen/ooxml-validator-vscode?branch=main)
 [![Project License](https://img.shields.io/github/license/mikeebowen/ooxml-validator-vscode?label=license)](https://github.com/mikeebowen/ooxml-validator-vscode/blob/main/LICENSE)
