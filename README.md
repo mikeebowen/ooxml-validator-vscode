@@ -13,10 +13,6 @@ The OOXML Validator validates Office Open XML files (.docx, .docm, .dotm, .dotx,
 - Validates Office Open XML files against Office Perpetual 2007, 2010, 2013, 2016, 2019, 2021, or Microsoft 365 Subscription _Defaults to Microsoft 365 Subscription_
 - Creates optional CSV or JSON log file of the errors.
 
-## Requirements
-
-The OOXML Validator requires that either the [.NET Install Tool for Extension Authors](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.vscode-dotnet-runtime) VS Code extension be installed or the `ooxml.dotNetPath` must be set in settings.json to the absolute path to the .Net Runtime.
-
 ## Usage
 
 To validate an OOXML file, right click on the file to validate and select "Validate OOXML". This displays the validation errors in the VS Code window. If `ooxml.outPutFilePath` is set, a log of the validation errors is created (defaults to .csv).
@@ -33,7 +29,10 @@ This extension contributes the following settings:
 - `ooxml.outPutFilePath`:
   String that specifies the absolute file path to write the output of the validator. If the file name does not end in ".json" or ".csv", ".csv" will be appended to the filename and saved as a .csv file. Path **MUST** be absolute. If no value is set, no log file will be saved.
 - `ooxml.overwriteLogFile`: If true, the new log file will overwrite previous log file of the same name if it exists. If false, a unique timestamp is added to the filename. Default is false.
-- `ooxml.dotNetPath`: The absolute path to the .Net Runtime. Path **MUST** be absolute. If not set, the extension will use [.NET Install Tool for Extension Authors](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.vscode-dotnet-runtime) to download the .Net Runtime.
+- `ooxml.dotNetPath`: The absolute path to the .Net Runtime. Path **MUST** be absolute. If not set, the extension will download the latest dotnet runtime. 
+
+
+> The path to the dotnet runtime executable will be similar to `"C:\\Program Files\\dotnet\\dotnet.exe"` for Windows and `"/usr/local/share/dotnet/dotnet"` for macos. For more information on finding the path to the dotnet executable, [this Stack Overflow post explains it for Windows](https://stackoverflow.com/questions/42588392/where-is-the-dotnet-command-executable-located-on-windows) and [this post explains how to find it on macos](https://stackoverflow.com/questions/41112054/where-is-the-default-net-core-sdk-path-in-macos).
 
 ## Release Notes
 
