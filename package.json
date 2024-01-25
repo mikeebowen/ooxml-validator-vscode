@@ -27,6 +27,9 @@
     "onCommand:ooxml-validator-vscode.validateOOXML"
   ],
   "main": "./dist/extension.js",
+  "extensionDependencies": [
+    "ms-dotnettools.vscode-dotnet-runtime"
+  ],
   "contributes": {
     "configuration": {
       "title": "OOXML",
