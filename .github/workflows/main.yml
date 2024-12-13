@@ -41,21 +41,25 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: test
+    if: github.event_name == 'release'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           registry-url: https://registry.npmjs.org/
       - name: Install the dependencies
         run: npm i
-        if: github.event_name == 'release'
-      - name: Install vsce
-        run: npm i -g vsce
-        if: github.event_name == 'release'
+      - name: Install @vscode/vsce
+        run: npm i -g @vscode/vsce
       - name: Publish
         run: vsce publish -p ${{ secrets.VSCE_PAT }}
-        if: github.event_name == 'release'
+      - name: Create Release Assets
+        run: vsce package
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: "*.vsix"
   finish:
     needs: test
     runs-on: ubuntu-latest
