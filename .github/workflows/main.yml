@@ -28,7 +28,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-      - run: npm install
+      - run: npm ci
       - run: xvfb-run -a npm test
         if: runner.os == 'Linux'
       - run: npm test
@@ -49,7 +49,7 @@ jobs:
           node-version: 22
           registry-url: https://registry.npmjs.org/
       - name: Install the dependencies
-        run: npm i
+        run: npm ci
       - name: Install @vscode/vsce
         run: npm i -g @vscode/vsce
       - name: Publish
