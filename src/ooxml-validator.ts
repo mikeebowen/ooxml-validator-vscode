@@ -4,7 +4,7 @@ import { basename, dirname, extname, isAbsolute, join, normalize } from 'path';
 import { TextEncoder } from 'util';
 import { Uri, ViewColumn, WebviewPanel, commands, extensions, window } from 'vscode';
 import { Header, IDotnetAcquireResult, IValidationError, ValidationError } from './models';
-import { WindowUtilities, WorkspaceUtilities } from './utilities';
+import { ExtensionUtilities, WindowUtilities, WorkspaceUtilities } from './utilities';
 
 export default class OOXMLValidator {
   static createLogFile = async (validationErrors: ValidationError[], path: string): Promise<string | undefined> => {
@@ -297,6 +297,20 @@ export default class OOXMLValidator {
       const requestingExtensionId = 'mikeebowen.ooxml-validator-vscode';
       let dotnetPath: string | undefined = WorkspaceUtilities.getConfigurationValue<string>('ooxml', 'dotNetPath');
 
+      if (dotnetPath) {
+        const dotnetPathIsValid = await ExtensionUtilities.isDotNetRuntime(dotnetPath.toString());
+
+        if (!dotnetPathIsValid) {
+          dotnetPath = undefined;
+          await WindowUtilities.showWarning(
+            'OOXML Validator: The .NET path set in the settings is not valid.',
+            // eslint-disable-next-line max-len
+            'Using the .NET Install Tool for Extension Authors extension to acquire .NET Runtime.\nUpdate the ooxml.dotNetPath setting to the use a local runtime.',
+            true,
+          );
+        }
+      }
+
       if (!dotnetPath) {
         const commandRes = await commands.executeCommand<IDotnetAcquireResult>('dotnet.acquire', {
           version: '8.0',
@@ -305,7 +319,7 @@ export default class OOXMLValidator {
         dotnetPath = commandRes!.dotnetPath;
 
         if (!dotnetPath) {
-          throw new Error('Could not resolve the dotnet path!');
+          throw new Error('Could not acquire .NET runtime.');
         }
       }
 

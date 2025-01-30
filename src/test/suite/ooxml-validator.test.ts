@@ -27,7 +27,7 @@ suite('OOXMLValidator', function () {
   suite('createLogFile', function () {
     test('should throw an error if path is not absolute', async function () {
       const isAbsoluteStub = stub(path, 'isAbsolute').returns(false);
-      const showErrorMessageStub = stub(window, 'showErrorMessage').returns(Promise.resolve() as Thenable<undefined>);
+      const showErrorMessageStub = stub(WindowUtilities, 'showError').returns(Promise.resolve() as Promise<void>);
       stubs.push(isAbsoluteStub, showErrorMessageStub);
       await OOXMLValidator.createLogFile([], 'tacocat');
       expect(isAbsoluteStub.args[0][0]).to.eq('tacocat.csv');
@@ -157,7 +157,7 @@ suite('OOXMLValidator', function () {
       ];
       const validationErrors = sdkValidationErrors.map((v: IValidationError) => new ValidationError(v));
       const testHtml = '<span>hello world</span>';
-      const showErrorMessageStub = stub(window, 'showErrorMessage');
+      const showErrorMessageStub = stub(WindowUtilities, 'showError');
       const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
       const disposeSpy = spy();
       const webview = { html: '' };
@@ -267,7 +267,7 @@ suite('OOXMLValidator', function () {
       const testHtml = '<span>hello world</span>';
       const testFilePath = 'C:\\source\\test\\errors\\tacocat.csv';
       const logFilePath = 'a/logfile/path';
-      const showErrorMessageStub = stub(window, 'showErrorMessage');
+      const showErrorMessageStub = stub(WindowUtilities, 'showError');
       const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
       const disposeSpy = spy();
       const webview = { html: '' };
@@ -348,7 +348,7 @@ suite('OOXMLValidator', function () {
     test('should show the no errors view if there are no validation errors', async function () {
       const validationErrors: ValidationError[] = [];
       const testHtml = '<span>hello world</span>';
-      const showErrorMessageStub = stub(window, 'showErrorMessage');
+      const showErrorMessageStub = stub(WindowUtilities, 'showError');
       const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
       const disposeSpy = spy();
       const webview = { html: '' };
@@ -426,7 +426,7 @@ suite('OOXMLValidator', function () {
       const executeCommandStub = stub(commands, 'executeCommand').returns(Promise.resolve({}));
       const file = Uri.file(__filename);
       const testHtml = '<span>hello world</span>';
-      const showErrorMessageStub = stub(window, 'showErrorMessage');
+      const showErrorMessageStub = stub(WindowUtilities, 'showError');
       const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
       const disposeSpy = spy();
       const webview = { html: '' };
@@ -453,7 +453,7 @@ suite('OOXMLValidator', function () {
       await OOXMLValidator.validate(file);
 
       expect(disposeSpy.called).to.eq(true, 'panel.dispose() should have been called');
-      expect(showErrorMessageStub.firstCall.firstArg).to.eq('Could not resolve the dotnet path!');
+      expect(showErrorMessageStub.firstCall.firstArg).to.eq('Could not acquire .NET runtime.');
     });
 
     test('should throw an error if it cannot find the extension', async function () {
@@ -461,7 +461,7 @@ suite('OOXMLValidator', function () {
       const executeCommandStub = stub(commands, 'executeCommand').returns(Promise.resolve({ dotnetPath }));
       const file = Uri.file(__filename);
       const testHtml = '<span>hello world</span>';
-      const showErrorMessageStub = stub(window, 'showErrorMessage');
+      const showErrorMessageStub = stub(WindowUtilities, 'showError');
       const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
       const disposeSpy = spy();
       const webview = { html: '' };
@@ -501,7 +501,7 @@ suite('OOXMLValidator', function () {
 
     test('should show an error and return if stderr has length', async function () {
       const testHtml = '<span>hello world</span>';
-      const showErrorMessageStub = stub(window, 'showErrorMessage');
+      const showErrorMessageStub = stub(WindowUtilities, 'showError');
       const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
       const disposeSpy = spy();
       const webview = { html: '' };
@@ -558,7 +558,7 @@ suite('OOXMLValidator', function () {
     test('should prompt the user to instal the dotnet runtime extension if trying to call it throws an error', async function () {
       const errMsg = 'dotnet.showAcquisitionLog command not found';
       const executeCommandStub = stub(commands, 'executeCommand').throws(errMsg);
-      const showErrorMessageStub = stub(window, 'showErrorMessage');
+      const showErrorMessageStub = stub(WindowUtilities, 'showError');
       const file = Uri.file(__filename);
 
       stubs.push(executeCommandStub, showErrorMessageStub);
@@ -569,7 +569,7 @@ suite('OOXMLValidator', function () {
         // eslint-disable-next-line max-len
         'The ".NET Install Tool for Extension Authors" VS Code extensionMUST be installed\nor the ooxml.dotNetPath must be set to th absolute path to the .Net Runtime\nfor the OOXML Validator extension to work.',
       );
-      expect(showErrorMessageStub.firstCall.lastArg).to.deep.eq({ modal: true });
+      expect(showErrorMessageStub.firstCall.lastArg).to.deep.eq(true);
     });
 
     test('should display an error if one is thrown', async function () {
