@@ -1,4 +1,5 @@
 import { FileSystemError, Uri, workspace } from 'vscode';
+import logger from './logger';
 
 export class WorkspaceUtilities {
   /**
@@ -7,7 +8,7 @@ export class WorkspaceUtilities {
    * @param {string} directoryPath The path to the directory to create.
    */
   static async createDirectory(directoryPath: string): Promise<void> {
-    // logger.trace(`Creating directory '${directoryPath}'`);
+    logger.trace(`Creating directory '${directoryPath}'`);
     await workspace.fs.createDirectory(Uri.file(directoryPath));
   }
 
@@ -20,14 +21,14 @@ export class WorkspaceUtilities {
      */
   static async writeFile(filePath: string, data: Uint8Array): Promise<boolean> {
     try {
-      // logger.trace(`Writing file '${filePath}'`);
+      logger.trace(`Writing file '${filePath}'`);
       await workspace.fs.writeFile(Uri.file(filePath), data);
     } catch (err) {
       if ((err as FileSystemError)?.code.toLowerCase() === 'unknown' && (err as FileSystemError)?.message.toLowerCase().includes('ebusy')) {
         return false;
       }
 
-      // logger.error(`Error writing file '${filePath}'`);
+      logger.error(`Error writing file '${filePath}'`);
       throw err;
     }
 
@@ -47,5 +48,5 @@ export class WorkspaceUtilities {
       .getConfiguration(section)
       .get(name);
   }
-  
+
 }
