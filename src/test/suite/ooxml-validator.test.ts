@@ -11,8 +11,7 @@ import { TextEncoder } from 'util';
 import { commands, Extension, extensions, Uri, ViewColumn, WebviewPanel, window, workspace, WorkspaceConfiguration } from 'vscode';
 import { IValidationError, ValidationError } from '../../models';
 import OOXMLValidator from '../../ooxml-validator';
-import { WindowUtilities } from '../../utilities/window-utilities';
-import { WorkspaceUtilities } from '../../utilities/workspace-utilities';
+import { WindowUtilities, WorkspaceUtilities } from '../../utilities';
 
 use(shallowDeepEqual);
 

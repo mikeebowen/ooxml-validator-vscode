@@ -4,8 +4,7 @@ import { basename, dirname, extname, isAbsolute, join, normalize } from 'path';
 import { TextEncoder } from 'util';
 import { Uri, ViewColumn, WebviewPanel, commands, extensions, window } from 'vscode';
 import { Header, IDotnetAcquireResult, IValidationError, ValidationError } from './models';
-import { WindowUtilities } from './utilities/window-utilities';
-import { WorkspaceUtilities } from './utilities/workspace-utilities';
+import { WindowUtilities, WorkspaceUtilities } from './utilities';
 
 export default class OOXMLValidator {
   static createLogFile = async (validationErrors: ValidationError[], path: string): Promise<string | undefined> => {
