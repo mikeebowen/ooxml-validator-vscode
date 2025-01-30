@@ -4,6 +4,7 @@ import { basename, dirname, extname, isAbsolute, join, normalize } from 'path';
 import { TextEncoder } from 'util';
 import { Uri, ViewColumn, WebviewPanel, commands, extensions, window } from 'vscode';
 import { Header, IDotnetAcquireResult, IValidationError, ValidationError } from './models';
+import { WindowUtilities } from './utilities/window-utilities';
 import { WorkspaceUtilities } from './utilities/workspace-utilities';
 
 export default class OOXMLValidator {
@@ -51,7 +52,7 @@ export default class OOXMLValidator {
 
       return normalizedPath;
     } else {
-      await window.showErrorMessage('OOXML Validator\nooxml.outPutFilePath must be an absolute path');
+      await WindowUtilities.showError('OOXML Validator\nooxml.outPutFilePath must be an absolute path');
     }
   };
 
@@ -325,7 +326,7 @@ export default class OOXMLValidator {
       const stderr = result?.stderr?.toString();
 
       if (stderr?.length > 0) {
-        window.showErrorMessage(`Failed to run OOXML Validator. The error was:\n${stderr}`, { modal: true });
+        WindowUtilities.showError(`Failed to run OOXML Validator. The error was:\n${stderr}`, true);
         panel.dispose();
 
         return;
@@ -365,7 +366,8 @@ export default class OOXMLValidator {
       });
 
       panel?.dispose();
-      await window.showErrorMessage(errMsg, { modal: true });
+
+      await WindowUtilities.showError(errMsg, true);
     }
   };
 }

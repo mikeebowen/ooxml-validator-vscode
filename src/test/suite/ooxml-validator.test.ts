@@ -11,6 +11,7 @@ import { TextEncoder } from 'util';
 import { commands, Extension, extensions, Uri, ViewColumn, WebviewPanel, window, workspace, WorkspaceConfiguration } from 'vscode';
 import { IValidationError, ValidationError } from '../../models';
 import OOXMLValidator from '../../ooxml-validator';
+import { WindowUtilities } from '../../utilities/window-utilities';
 import { WorkspaceUtilities } from '../../utilities/workspace-utilities';
 
 use(shallowDeepEqual);
@@ -575,7 +576,7 @@ suite('OOXMLValidator', function () {
     test('should display an error if one is thrown', async function () {
       const errMsg = ['eek gads no tacos!!'];
       const executeCommandStub = stub(commands, 'executeCommand').throws(errMsg);
-      const showErrorMessageStub = stub(window, 'showErrorMessage');
+      const showErrorMessageStub = stub(WindowUtilities, 'showError');
       const file = Uri.file(__filename);
 
       stubs.push(executeCommandStub, showErrorMessageStub);
@@ -583,7 +584,7 @@ suite('OOXMLValidator', function () {
       await OOXMLValidator.validate(file);
 
       expect(showErrorMessageStub.firstCall.firstArg).to.deep.eq(errMsg);
-      expect(showErrorMessageStub.firstCall.lastArg).to.deep.eq({ modal: true });
+      expect(showErrorMessageStub.firstCall.lastArg).to.deep.eq(true);
     });
   });
 });
