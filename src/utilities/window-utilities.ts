@@ -1,4 +1,4 @@
-import { window } from 'vscode';
+import { ViewColumn, WebviewOptions, WebviewPanelOptions, window } from 'vscode';
 import logger from './logger';
 
 export class WindowUtilities {
@@ -27,5 +27,12 @@ export class WindowUtilities {
   static async showWarning(message: string, detail: string | undefined = undefined,  modal: boolean = false): Promise<void> {
     logger.warn(message);
     await window.showWarningMessage(message, { modal, detail });
+  }
+
+  static createWebView(viewType: string, title: string, showOptions: ViewColumn | {
+    readonly viewColumn: ViewColumn;
+    readonly preserveFocus?: boolean;
+}, options?: WebviewPanelOptions & WebviewOptions) {
+    return window.createWebviewPanel(viewType, title, showOptions, options);
   }
 }

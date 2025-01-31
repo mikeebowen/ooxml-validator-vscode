@@ -2,7 +2,7 @@ import { spawnSync } from 'child_process';
 import { createObjectCsvWriter } from 'csv-writer';
 import { basename, dirname, extname, isAbsolute, join, normalize } from 'path';
 import { TextEncoder } from 'util';
-import { Uri, ViewColumn, WebviewPanel, commands, extensions, window } from 'vscode';
+import { Uri, ViewColumn, WebviewPanel, commands, extensions } from 'vscode';
 import { Header, IDotnetAcquireResult, IValidationError, ValidationError } from './models';
 import { ExtensionUtilities, WindowUtilities, WorkspaceUtilities } from './utilities';
 
@@ -271,7 +271,7 @@ export default class OOXMLValidator {
   };
 
   static validate = async (uri: Uri) => {
-    const panel: WebviewPanel = window.createWebviewPanel('validateOOXML', 'OOXML Validate', ViewColumn.One, { enableScripts: true });
+    const panel: WebviewPanel = WindowUtilities.createWebView('validateOOXML', 'OOXML Validate', ViewColumn.One, { enableScripts: true });
 
     try {
       panel.webview.html = OOXMLValidator.getWebviewContent();

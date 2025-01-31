@@ -8,7 +8,7 @@ import * as path from 'path';
 import { basename, join, normalize } from 'path';
 import { SinonStub, spy, stub } from 'sinon';
 import { TextEncoder } from 'util';
-import { commands, Extension, extensions, Uri, ViewColumn, WebviewPanel, window, workspace, WorkspaceConfiguration } from 'vscode';
+import { commands, Extension, extensions, Uri, ViewColumn, WebviewPanel, workspace, WorkspaceConfiguration } from 'vscode';
 import { IValidationError, ValidationError } from '../../models';
 import OOXMLValidator from '../../ooxml-validator';
 import { WindowUtilities, WorkspaceUtilities } from '../../utilities';
@@ -161,7 +161,7 @@ suite('OOXMLValidator', function () {
       const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
       const disposeSpy = spy();
       const webview = { html: '' };
-      const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns({
+      const createWebviewPanelStub = stub(WindowUtilities, 'createWebView').returns({
         webview,
         dispose: disposeSpy,
       } as unknown as WebviewPanel);
@@ -271,7 +271,7 @@ suite('OOXMLValidator', function () {
       const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
       const disposeSpy = spy();
       const webview = { html: '' };
-      const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns({
+      const createWebviewPanelStub = stub(WindowUtilities, 'createWebView').returns({
         webview,
         dispose: disposeSpy,
       } as unknown as WebviewPanel);
@@ -352,7 +352,7 @@ suite('OOXMLValidator', function () {
       const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
       const disposeSpy = spy();
       const webview = { html: '' };
-      const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns({
+      const createWebviewPanelStub = stub(WindowUtilities, 'createWebView').returns({
         webview,
         dispose: disposeSpy,
       } as unknown as WebviewPanel);
@@ -430,7 +430,7 @@ suite('OOXMLValidator', function () {
       const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
       const disposeSpy = spy();
       const webview = { html: '' };
-      const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns({
+      const createWebviewPanelStub = stub(WindowUtilities, 'createWebView').returns({
         webview,
         dispose: disposeSpy,
       } as unknown as WebviewPanel);
@@ -465,7 +465,7 @@ suite('OOXMLValidator', function () {
       const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
       const disposeSpy = spy();
       const webview = { html: '' };
-      const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns({
+      const createWebviewPanelStub = stub(WindowUtilities, 'createWebView').returns({
         webview,
         dispose: disposeSpy,
       } as unknown as WebviewPanel);
@@ -505,7 +505,7 @@ suite('OOXMLValidator', function () {
       const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
       const disposeSpy = spy();
       const webview = { html: '' };
-      const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns({
+      const createWebviewPanelStub = stub(WindowUtilities, 'createWebView').returns({
         webview,
         dispose: disposeSpy,
       } as unknown as WebviewPanel);
