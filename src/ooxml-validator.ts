@@ -291,17 +291,17 @@ export default class OOXMLValidator {
       // Default to the latest format version
       const version =
         versionStr && versions.includes(versionStr) ? formatVersions.get(versionStr) : [...formatVersions.values()].pop();
-
       await commands.executeCommand('dotnet.showAcquisitionLog');
 
       const requestingExtensionId = 'mikeebowen.ooxml-validator-vscode';
       let dotnetPath: string | undefined = WorkspaceUtilities.getConfigurationValue<string>('ooxml', 'dotNetPath');
 
       if (dotnetPath) {
-        const dotnetPathIsValid = await ExtensionUtilities.isDotNetRuntime(dotnetPath.toString());
+        const dotnetPathIsValid = await ExtensionUtilities.isDotNetRuntime(dotnetPath);
 
         if (!dotnetPathIsValid) {
           dotnetPath = undefined;
+
           await WindowUtilities.showWarning(
             'OOXML Validator: The .NET path set in the settings is not valid.',
             // eslint-disable-next-line max-len

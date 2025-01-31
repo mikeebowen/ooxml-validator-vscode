@@ -11,7 +11,7 @@ import { TextEncoder } from 'util';
 import { commands, Extension, extensions, Uri, ViewColumn, WebviewPanel, workspace, WorkspaceConfiguration } from 'vscode';
 import { IValidationError, ValidationError } from '../../models';
 import OOXMLValidator from '../../ooxml-validator';
-import { WindowUtilities, WorkspaceUtilities } from '../../utilities';
+import { ExtensionUtilities, WindowUtilities, WorkspaceUtilities } from '../../utilities';
 
 use(shallowDeepEqual);
 
@@ -555,7 +555,7 @@ suite('OOXMLValidator', function () {
       expect(showErrorMessageStub.firstCall.firstArg).to.eq(`Failed to run OOXML Validator. The error was:\n${errorMsg}`);
     });
 
-    test('should prompt the user to instal the dotnet runtime extension if trying to call it throws an error', async function () {
+    test('should prompt the user to install the dotnet runtime extension if trying to call it throws an error', async function () {
       const errMsg = 'dotnet.showAcquisitionLog command not found';
       const executeCommandStub = stub(commands, 'executeCommand').throws(errMsg);
       const showErrorMessageStub = stub(WindowUtilities, 'showError');
@@ -570,6 +570,33 @@ suite('OOXMLValidator', function () {
         'The ".NET Install Tool for Extension Authors" VS Code extensionMUST be installed\nor the ooxml.dotNetPath must be set to th absolute path to the .Net Runtime\nfor the OOXML Validator extension to work.',
       );
       expect(showErrorMessageStub.firstCall.lastArg).to.deep.eq(true);
+    });
+
+    test('should show warning if the path to the local dotnet runtime is invalid', function() {
+      const file = Uri.file(__filename);
+      const dotnetPath = join('road', 'to', 'nowhere');
+
+      const executeCommandStub = stub(commands, 'executeCommand').returns(Promise.resolve({dotnetPath}));
+      const isDotNetRuntimeStub = stub(ExtensionUtilities, 'isDotNetRuntime').returns(Promise.resolve(false));
+      const showWarningMessageStub = stub(WindowUtilities, 'showWarning');
+      const spawnSyncStub = stub(child_process, 'spawnSync').returns({
+        stdout: Buffer.from(JSON.stringify([])),
+        stderr: Buffer.from(''),
+        pid: 7,
+        output: [null],
+        status: 13,
+        signal: null,
+      });
+
+      stubs.push(executeCommandStub, isDotNetRuntimeStub, showWarningMessageStub, spawnSyncStub);
+
+      OOXMLValidator.validate(file).then(() => {
+        expect(showWarningMessageStub.firstCall.firstArg).to.eq('OOXML Validator: The .NET path set in the settings is not valid.');
+        // eslint-disable-next-line max-len
+        expect(showWarningMessageStub.firstCall.args[1]).to.eq('Using the .NET Install Tool for Extension Authors extension to acquire .NET Runtime.\nUpdate the ooxml.dotNetPath setting to the use a local runtime.');
+        expect(showWarningMessageStub.firstCall.args[2]).to.be.true;
+      });
+
     });
 
     test('should display an error if one is thrown', async function () {
@@ -587,3 +614,4 @@ suite('OOXMLValidator', function () {
     });
   });
 });
+
