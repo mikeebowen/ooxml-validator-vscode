@@ -599,6 +599,30 @@ suite('OOXMLValidator', function () {
 
     });
 
+    test('should not show a warning if the path to the local dotnet runtime is valid', function() {
+      const file = Uri.file(__filename);
+      const dotnetPath = join('road', 'to', 'somewhere');
+
+      const executeCommandStub = stub(commands, 'executeCommand').returns(Promise.resolve({dotnetPath}));
+      const isDotNetRuntimeStub = stub(ExtensionUtilities, 'isDotNetRuntime').returns(Promise.resolve(true));
+      const showWarningMessageStub = stub(WindowUtilities, 'showWarning');
+      const spawnSyncStub = stub(child_process, 'spawnSync').returns({
+        stdout: Buffer.from(JSON.stringify([])),
+        stderr: Buffer.from(''),
+        pid: 7,
+        output: [null],
+        status: 13,
+        signal: null,
+      });
+
+      stubs.push(executeCommandStub, isDotNetRuntimeStub, showWarningMessageStub, spawnSyncStub);
+
+      OOXMLValidator.validate(file).then(() => {
+        expect(showWarningMessageStub.called).to.be.false;
+      });
+
+    });
+
     test('should display an error if one is thrown', async function () {
       const errMsg = ['eek gads no tacos!!'];
       const executeCommandStub = stub(commands, 'executeCommand').throws(errMsg);

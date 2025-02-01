@@ -24,7 +24,8 @@ export class WorkspaceUtilities {
       logger.trace(`Writing file '${filePath}'`);
       await workspace.fs.writeFile(Uri.file(filePath), data);
     } catch (err) {
-      if ((err as FileSystemError)?.code.toLowerCase() === 'unknown' && (err as FileSystemError)?.message.toLowerCase().includes('ebusy')) {
+      if ((err as FileSystemError)?.code?.toLowerCase() === 'unknown'
+      || (err as FileSystemError)?.message.toLowerCase().includes('ebusy')) {
         return false;
       }
 
