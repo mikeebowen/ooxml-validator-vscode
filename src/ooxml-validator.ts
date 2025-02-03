@@ -2,14 +2,9 @@ import { spawnSync } from 'child_process';
 import { createObjectCsvWriter } from 'csv-writer';
 import { basename, dirname, extname, isAbsolute, join, normalize } from 'path';
 import { TextEncoder } from 'util';
-import { Uri, ViewColumn, WebviewPanel, commands, extensions, window, workspace } from 'vscode';
+import { Uri, ViewColumn, WebviewPanel, commands, extensions } from 'vscode';
 import { Header, IDotnetAcquireResult, IValidationError, ValidationError } from './models';
-
-// wrapping methods to make stubbing for tests easier
-export const effEss = {
-  createDirectory: workspace.fs.createDirectory,
-  writeFile: workspace.fs.writeFile,
-};
+import { ExtensionUtilities, WindowUtilities, WorkspaceUtilities } from './utilities';
 
 export default class OOXMLValidator {
   static createLogFile = async (validationErrors: ValidationError[], path: string): Promise<string | undefined> => {
@@ -22,8 +17,8 @@ export default class OOXMLValidator {
     }
 
     if (isAbsolute(normalizedPath)) {
-      await effEss.createDirectory(Uri.file(dirname(normalizedPath)));
-      const overwriteLogFile: boolean | undefined = workspace.getConfiguration('ooxml').get('overwriteLogFile');
+      await WorkspaceUtilities.createDirectory(dirname(normalizedPath));
+      const overwriteLogFile: boolean | undefined = WorkspaceUtilities.getConfigurationValue<boolean>('ooxml', 'overwriteLogFile');
 
       if (!overwriteLogFile) {
         normalizedPath = `${normalizedPath.substring(0, normalizedPath.length - ext.length)}.${new Date()
@@ -33,7 +28,7 @@ export default class OOXMLValidator {
 
       if (ext === '.json') {
         const encoder = new TextEncoder();
-        await effEss.writeFile(Uri.file(normalizedPath), encoder.encode(JSON.stringify(validationErrors, null, 2)));
+        await WorkspaceUtilities.writeFile(normalizedPath, encoder.encode(JSON.stringify(validationErrors, null, 2)));
       } else {
         const csvWriter = createObjectCsvWriter({
           path: normalizedPath,
@@ -56,19 +51,27 @@ export default class OOXMLValidator {
 
       return normalizedPath;
     } else {
-      await window.showErrorMessage('OOXML Validator\nooxml.outPutFilePath must be an absolute path');
+      await WindowUtilities.showError('OOXML Validator\nooxml.outPutFilePath must be an absolute path');
     }
   };
 
-  static getWebviewContent = (validationErrors?: ValidationError[], version?: string, fileName?: string, path?: string): string => {
+  static getWebviewContent = (
+    validationErrors?: ValidationError[],
+    version?: string,
+    fileName?: string,
+    path?: string,
+  ): string => {
     if (validationErrors && validationErrors.length) {
       let list = '';
-      validationErrors.forEach(err => {
+      validationErrors.forEach((err) => {
         list += `<dl class="row">
               <dt class="col-sm-3">Id</dt>
               <dd class="col-sm-9">${err.Id}</dd>
               <dt class="col-sm-3">Description</dt>
-              <dd class="col-sm-9">${err.Description?.replace(/</g, '&lt;')}</dd>
+              <dd class="col-sm-9">${err.Description?.replace(
+          /</g,
+          '&lt;',
+        )}</dd>
               <dt class="col-sm-3">XPath</dt>
               <dd class="col-sm-9">
                 ${err.XPath}
@@ -78,7 +81,9 @@ export default class OOXMLValidator {
               <dt class="col-sm-3">NamespacesDefinitions</dt>
               <dd class="col-sm-9">
                 <ul>
-                  ${err.NamespacesDefinitions?.map((n: string) => `<li>${n}</li>`).join('')}
+                  ${err.NamespacesDefinitions?.map(
+          (n: string) => `<li>${n}</li>`,
+        ).join('')}
                 </ul>
               </dd>
             </dl>`;
@@ -107,36 +112,21 @@ export default class OOXMLValidator {
               <div class="container-fluid pt-3 ol-3">
               <div class="row pb-3">
                 <div class="col">
-                  <h1>There Were ${validationErrors.length} Validation Errors Found</h1>
+                  <h1>There ${validationErrors.length === 1 ? 'was' : 'were'} ${
+        validationErrors.length
+      } Validation Error${validationErrors.length > 1 ? 's' : ''} Found</h1>
                   <h2>Validating against ${version}</h2>
-  ${path
-        ? `<h3>A log of these errors was saved as "${path}"</h3>`
-        : // eslint-disable-next-line max-len
-        '<h3>No log of these errors was saved.</h3><h4>Set "ooxml.outPutFilePath" in settings.json to save a log (csv or json) of the errors</h4>'
-        }
+  ${
+    path
+      ? `<h3>A log of these errors was saved as "${path}"</h3>`
+      : // eslint-disable-next-line max-len
+      '<h3>No log of these errors was saved.</h3><h4>Set "ooxml.outPutFilePath" in settings.json to save a log (csv or json) of the errors</h4>'
+  }
                 </div>
               </div>
               <div class="row pb-3">
                 <div class="col">
-                <div class="btn-group-toggle"
-                  data-toggle="collapse"
-                  data-target="#collapseExample"
-                  aria-expanded="false"
-                  aria-controls="collapseExample"
-                >
-                  <label class="btn btn-outline-secondary" id="error-btn">
-                    <input
-                      class="btn btn-outline-secondary"
-                      type="checkbox"
-                      checked
-                    />
-                  </label>
-                  </div>
-                </div>
-              </div>
-              <div class="row pb-3">
-                <div class="col">
-                  <div class="collapse" id="collapseExample">
+                  <div>
                     <div class="card card-body">
                       ${list}
                     </div>
@@ -281,7 +271,7 @@ export default class OOXMLValidator {
   };
 
   static validate = async (uri: Uri) => {
-    const panel: WebviewPanel = window.createWebviewPanel('validateOOXML', 'OOXML Validate', ViewColumn.One, { enableScripts: true });
+    const panel: WebviewPanel = WindowUtilities.createWebView('validateOOXML', 'OOXML Validate', ViewColumn.One, { enableScripts: true });
 
     try {
       panel.webview.html = OOXMLValidator.getWebviewContent();
@@ -295,17 +285,31 @@ export default class OOXMLValidator {
       formatVersions.set('2021', 'Office2021');
       formatVersions.set('365', 'Microsoft365');
 
-      const configVersion: number | string | undefined = workspace.getConfiguration('ooxml').get('fileFormatVersion');
+      const configVersion: number | undefined = WorkspaceUtilities.getConfigurationValue<number>('ooxml', 'fileFormatVersion');
       const versionStr = configVersion?.toString();
       const versions = [...formatVersions.keys()];
       // Default to the latest format version
       const version =
         versionStr && versions.includes(versionStr) ? formatVersions.get(versionStr) : [...formatVersions.values()].pop();
-
       await commands.executeCommand('dotnet.showAcquisitionLog');
 
       const requestingExtensionId = 'mikeebowen.ooxml-validator-vscode';
-      let dotnetPath: string | undefined = workspace.getConfiguration('ooxml').get('dotNetPath');
+      let dotnetPath: string | undefined = WorkspaceUtilities.getConfigurationValue<string>('ooxml', 'dotNetPath');
+
+      if (dotnetPath) {
+        const dotnetPathIsValid = await ExtensionUtilities.isDotNetRuntime(dotnetPath);
+
+        if (!dotnetPathIsValid) {
+          dotnetPath = undefined;
+
+          await WindowUtilities.showWarning(
+            'OOXML Validator: The .NET path set in the settings is not valid.',
+            // eslint-disable-next-line max-len
+            'Using the .NET Install Tool for Extension Authors extension to acquire .NET Runtime.\nUpdate the ooxml.dotNetPath setting to the use a local runtime.',
+            true,
+          );
+        }
+      }
 
       if (!dotnetPath) {
         const commandRes = await commands.executeCommand<IDotnetAcquireResult>('dotnet.acquire', {
@@ -315,7 +319,7 @@ export default class OOXMLValidator {
         dotnetPath = commandRes!.dotnetPath;
 
         if (!dotnetPath) {
-          throw new Error('Could not resolve the dotnet path!');
+          throw new Error('Could not acquire .NET runtime.');
         }
       }
 
@@ -335,7 +339,7 @@ export default class OOXMLValidator {
       const stderr = result?.stderr?.toString();
 
       if (stderr?.length > 0) {
-        window.showErrorMessage(`Failed to run OOXML Validator. The error was:\n${stderr}`, { modal: true });
+        WindowUtilities.showError(`Failed to run OOXML Validator. The error was:\n${stderr}`, true);
         panel.dispose();
 
         return;
@@ -346,7 +350,7 @@ export default class OOXMLValidator {
       let content: string;
 
       if (validationErrors.length) {
-        const path: string | undefined = workspace.getConfiguration('ooxml').get('outPutFilePath');
+        const path: string | undefined = WorkspaceUtilities.getConfigurationValue<string>('ooxml', 'outPutFilePath');
         let pathToSavedFile: string | undefined;
 
         if (path) {
@@ -375,7 +379,8 @@ export default class OOXMLValidator {
       });
 
       panel?.dispose();
-      await window.showErrorMessage(errMsg, { modal: true });
+
+      await WindowUtilities.showError(errMsg, true);
     }
   };
 }

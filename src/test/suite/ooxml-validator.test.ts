@@ -8,9 +8,10 @@ import * as path from 'path';
 import { basename, join, normalize } from 'path';
 import { SinonStub, spy, stub } from 'sinon';
 import { TextEncoder } from 'util';
-import { commands, Extension, extensions, Uri, ViewColumn, WebviewPanel, window, workspace, WorkspaceConfiguration } from 'vscode';
+import { commands, Extension, extensions, Uri, ViewColumn, WebviewPanel, workspace, WorkspaceConfiguration } from 'vscode';
 import { IValidationError, ValidationError } from '../../models';
-import OOXMLValidator, { effEss } from '../../ooxml-validator';
+import OOXMLValidator from '../../ooxml-validator';
+import { ExtensionUtilities, WindowUtilities, WorkspaceUtilities } from '../../utilities';
 
 use(shallowDeepEqual);
 
@@ -26,7 +27,7 @@ suite('OOXMLValidator', function () {
   suite('createLogFile', function () {
     test('should throw an error if path is not absolute', async function () {
       const isAbsoluteStub = stub(path, 'isAbsolute').returns(false);
-      const showErrorMessageStub = stub(window, 'showErrorMessage').returns(Promise.resolve() as Thenable<undefined>);
+      const showErrorMessageStub = stub(WindowUtilities, 'showError').returns(Promise.resolve() as Promise<void>);
       stubs.push(isAbsoluteStub, showErrorMessageStub);
       await OOXMLValidator.createLogFile([], 'tacocat');
       expect(isAbsoluteStub.args[0][0]).to.eq('tacocat.csv');
@@ -35,17 +36,17 @@ suite('OOXMLValidator', function () {
 
     test('should create a json file if the file\'s extension is ".json"', function (done) {
       const testPath: string = normalize(path.join(__dirname, 'racecar.json'));
-      const createDirectoryStub = stub(effEss, 'createDirectory');
-      const writeFileStub: SinonStub = stub(effEss, 'writeFile');
+      const createDirectoryStub = stub(WorkspaceUtilities, 'createDirectory');
+      const writeFileStub: SinonStub = stub(WorkspaceUtilities, 'writeFile');
       stubs.push(writeFileStub, createDirectoryStub);
       const errors: ValidationError[] = [new ValidationError({}), new ValidationError({})];
       const testBuffer = new TextEncoder().encode(JSON.stringify(errors, null, 2));
 
       OOXMLValidator.createLogFile(errors, testPath)
         .then(() => {
-          expect(createDirectoryStub.calledOnceWith(Uri.file(path.dirname(testPath)))).to.be.true;
-          expect(writeFileStub.args[0][0].path.includes(normalize(path.join(__dirname, 'racecar'))));
-          expect(Buffer.from(testBuffer).equals(Buffer.from(writeFileStub.args[0][1]))).to.be.true;
+          expect(createDirectoryStub.calledOnceWith(path.dirname(testPath))).to.be.true;
+          expect(writeFileStub.args[0][0].includes(normalize(path.join(__dirname, 'racecar'))));
+          expect(new Uint8Array(testBuffer).every((value, index) => value === writeFileStub.args[0][1][index])).to.be.true;
           done();
         })
         .catch(err => {
@@ -99,7 +100,7 @@ suite('OOXMLValidator', function () {
         }),
       ];
       const testHtml =
-        '<!DOCTYPE html>\n        <html lang="en">\n        <head>\n            <meta charset="UTF-8">\n            <meta name="viewport" content="width=device-width, initial-scale=1.0">\n            <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous"></head>\n            <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>\n            <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>\n            <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>\n            <style>\n              label#error-btn:after {\n                content:\'View Errors\';\n              }\n\n              [aria-expanded="true"] label#error-btn:after {\n                content:\'Hide Errors\';\n              }\n            </style>\n            <title>OOXML Validation Errors</title>\n            <body>\n              <div class="container-fluid pt-3 ol-3">\n              <div class="row pb-3">\n                <div class="col">\n                  <h1>There Were 2 Validation Errors Found</h1>\n                  <h2>Validating against test-file.csv</h2>\n  <h3>No log of these errors was saved.</h3><h4>Set "ooxml.outPutFilePath" in settings.json to save a log (csv or json) of the errors</h4>\n                </div>\n              </div>\n              <div class="row pb-3">\n                <div class="col">\n                <div class="btn-group-toggle"\n                  data-toggle="collapse"\n                  data-target="#collapseExample"\n                  aria-expanded="false"\n                  aria-controls="collapseExample"\n                >\n                  <label class="btn btn-outline-secondary" id="error-btn">\n                    <input\n                      class="btn btn-outline-secondary"\n                      type="checkbox"\n                      checked\n                    />\n                  </label>\n                  </div>\n                </div>\n              </div>\n              <div class="row pb-3">\n                <div class="col">\n                  <div class="collapse" id="collapseExample">\n                    <div class="card card-body">\n                      <dl class="row">\n              <dt class="col-sm-3">Id</dt>\n              <dd class="col-sm-9">1</dd>\n              <dt class="col-sm-3">Description</dt>\n              <dd class="col-sm-9">the first test error</dd>\n              <dt class="col-sm-3">XPath</dt>\n              <dd class="col-sm-9">\n                undefined\n              </dd>\n              <dt class="col-sm-3">Part URI</dt>\n              <dd class="col-sm-9">some/uri</dd>\n              <dt class="col-sm-3">NamespacesDefinitions</dt>\n              <dd class="col-sm-9">\n                <ul>\n                  <li>firstNamespace</li><li>secondNamespace</li>\n                </ul>\n              </dd>\n            </dl><dl class="row">\n              <dt class="col-sm-3">Id</dt>\n              <dd class="col-sm-9">2</dd>\n              <dt class="col-sm-3">Description</dt>\n              <dd class="col-sm-9">the second test error</dd>\n              <dt class="col-sm-3">XPath</dt>\n              <dd class="col-sm-9">\n                undefined\n              </dd>\n              <dt class="col-sm-3">Part URI</dt>\n              <dd class="col-sm-9">some/other/uri</dd>\n              <dt class="col-sm-3">NamespacesDefinitions</dt>\n              <dd class="col-sm-9">\n                <ul>\n                  <li>thirdNamespace</li><li>fourthNamespace</li>\n                </ul>\n              </dd>\n            </dl>\n                    </div>\n                  </div>\n                </div>\n              </div>\n            </body>\n        </html>';
+        "<!DOCTYPE html>\n        <html lang=\"en\">\n        <head>\n            <meta charset=\"UTF-8\">\n            <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n            <link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css\" integrity=\"sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm\" crossorigin=\"anonymous\"></head>\n            <script src=\"https://code.jquery.com/jquery-3.2.1.slim.min.js\" integrity=\"sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN\" crossorigin=\"anonymous\"></script>\n            <script src=\"https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js\" integrity=\"sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q\" crossorigin=\"anonymous\"></script>\n            <script src=\"https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js\" integrity=\"sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl\" crossorigin=\"anonymous\"></script>\n            <style>\n              label#error-btn:after {\n                content:'View Errors';\n              }\n\n              [aria-expanded=\"true\"] label#error-btn:after {\n                content:'Hide Errors';\n              }\n            </style>\n            <title>OOXML Validation Errors</title>\n            <body>\n              <div class=\"container-fluid pt-3 ol-3\">\n              <div class=\"row pb-3\">\n                <div class=\"col\">\n                  <h1>There were 2 Validation Errors Found</h1>\n                  <h2>Validating against test-file.csv</h2>\n  <h3>No log of these errors was saved.</h3><h4>Set \"ooxml.outPutFilePath\" in settings.json to save a log (csv or json) of the errors</h4>\n                </div>\n              </div>\n              <div class=\"row pb-3\">\n                <div class=\"col\">\n                  <div>\n                    <div class=\"card card-body\">\n                      <dl class=\"row\">\n              <dt class=\"col-sm-3\">Id</dt>\n              <dd class=\"col-sm-9\">1</dd>\n              <dt class=\"col-sm-3\">Description</dt>\n              <dd class=\"col-sm-9\">the first test error</dd>\n              <dt class=\"col-sm-3\">XPath</dt>\n              <dd class=\"col-sm-9\">\n                undefined\n              </dd>\n              <dt class=\"col-sm-3\">Part URI</dt>\n              <dd class=\"col-sm-9\">some/uri</dd>\n              <dt class=\"col-sm-3\">NamespacesDefinitions</dt>\n              <dd class=\"col-sm-9\">\n                <ul>\n                  <li>firstNamespace</li><li>secondNamespace</li>\n                </ul>\n              </dd>\n            </dl><dl class=\"row\">\n              <dt class=\"col-sm-3\">Id</dt>\n              <dd class=\"col-sm-9\">2</dd>\n              <dt class=\"col-sm-3\">Description</dt>\n              <dd class=\"col-sm-9\">the second test error</dd>\n              <dt class=\"col-sm-3\">XPath</dt>\n              <dd class=\"col-sm-9\">\n                undefined\n              </dd>\n              <dt class=\"col-sm-3\">Part URI</dt>\n              <dd class=\"col-sm-9\">some/other/uri</dd>\n              <dt class=\"col-sm-3\">NamespacesDefinitions</dt>\n              <dd class=\"col-sm-9\">\n                <ul>\n                  <li>thirdNamespace</li><li>fourthNamespace</li>\n                </ul>\n              </dd>\n            </dl>\n                    </div>\n                  </div>\n                </div>\n              </div>\n            </body>\n        </html>";
       const html = OOXMLValidator.getWebviewContent(validationErrors, 'test-file.csv', '/test-directory');
       expect(testHtml).to.equal(html);
       done();
@@ -156,11 +157,11 @@ suite('OOXMLValidator', function () {
       ];
       const validationErrors = sdkValidationErrors.map((v: IValidationError) => new ValidationError(v));
       const testHtml = '<span>hello world</span>';
-      const showErrorMessageStub = stub(window, 'showErrorMessage');
+      const showErrorMessageStub = stub(WindowUtilities, 'showError');
       const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
       const disposeSpy = spy();
       const webview = { html: '' };
-      const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns({
+      const createWebviewPanelStub = stub(WindowUtilities, 'createWebView').returns({
         webview,
         dispose: disposeSpy,
       } as unknown as WebviewPanel);
@@ -266,11 +267,11 @@ suite('OOXMLValidator', function () {
       const testHtml = '<span>hello world</span>';
       const testFilePath = 'C:\\source\\test\\errors\\tacocat.csv';
       const logFilePath = 'a/logfile/path';
-      const showErrorMessageStub = stub(window, 'showErrorMessage');
+      const showErrorMessageStub = stub(WindowUtilities, 'showError');
       const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
       const disposeSpy = spy();
       const webview = { html: '' };
-      const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns({
+      const createWebviewPanelStub = stub(WindowUtilities, 'createWebView').returns({
         webview,
         dispose: disposeSpy,
       } as unknown as WebviewPanel);
@@ -347,11 +348,11 @@ suite('OOXMLValidator', function () {
     test('should show the no errors view if there are no validation errors', async function () {
       const validationErrors: ValidationError[] = [];
       const testHtml = '<span>hello world</span>';
-      const showErrorMessageStub = stub(window, 'showErrorMessage');
+      const showErrorMessageStub = stub(WindowUtilities, 'showError');
       const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
       const disposeSpy = spy();
       const webview = { html: '' };
-      const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns({
+      const createWebviewPanelStub = stub(WindowUtilities, 'createWebView').returns({
         webview,
         dispose: disposeSpy,
       } as unknown as WebviewPanel);
@@ -425,11 +426,11 @@ suite('OOXMLValidator', function () {
       const executeCommandStub = stub(commands, 'executeCommand').returns(Promise.resolve({}));
       const file = Uri.file(__filename);
       const testHtml = '<span>hello world</span>';
-      const showErrorMessageStub = stub(window, 'showErrorMessage');
+      const showErrorMessageStub = stub(WindowUtilities, 'showError');
       const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
       const disposeSpy = spy();
       const webview = { html: '' };
-      const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns({
+      const createWebviewPanelStub = stub(WindowUtilities, 'createWebView').returns({
         webview,
         dispose: disposeSpy,
       } as unknown as WebviewPanel);
@@ -452,7 +453,7 @@ suite('OOXMLValidator', function () {
       await OOXMLValidator.validate(file);
 
       expect(disposeSpy.called).to.eq(true, 'panel.dispose() should have been called');
-      expect(showErrorMessageStub.firstCall.firstArg).to.eq('Could not resolve the dotnet path!');
+      expect(showErrorMessageStub.firstCall.firstArg).to.eq('Could not acquire .NET runtime.');
     });
 
     test('should throw an error if it cannot find the extension', async function () {
@@ -460,11 +461,11 @@ suite('OOXMLValidator', function () {
       const executeCommandStub = stub(commands, 'executeCommand').returns(Promise.resolve({ dotnetPath }));
       const file = Uri.file(__filename);
       const testHtml = '<span>hello world</span>';
-      const showErrorMessageStub = stub(window, 'showErrorMessage');
+      const showErrorMessageStub = stub(WindowUtilities, 'showError');
       const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
       const disposeSpy = spy();
       const webview = { html: '' };
-      const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns({
+      const createWebviewPanelStub = stub(WindowUtilities, 'createWebView').returns({
         webview,
         dispose: disposeSpy,
       } as unknown as WebviewPanel);
@@ -500,11 +501,11 @@ suite('OOXMLValidator', function () {
 
     test('should show an error and return if stderr has length', async function () {
       const testHtml = '<span>hello world</span>';
-      const showErrorMessageStub = stub(window, 'showErrorMessage');
+      const showErrorMessageStub = stub(WindowUtilities, 'showError');
       const getWebviewContentStub = stub(OOXMLValidator, 'getWebviewContent').returns(testHtml);
       const disposeSpy = spy();
       const webview = { html: '' };
-      const createWebviewPanelStub = stub(window, 'createWebviewPanel').returns({
+      const createWebviewPanelStub = stub(WindowUtilities, 'createWebView').returns({
         webview,
         dispose: disposeSpy,
       } as unknown as WebviewPanel);
@@ -554,10 +555,10 @@ suite('OOXMLValidator', function () {
       expect(showErrorMessageStub.firstCall.firstArg).to.eq(`Failed to run OOXML Validator. The error was:\n${errorMsg}`);
     });
 
-    test('should prompt the user to instal the dotnet runtime extension if trying to call it throws an error', async function () {
+    test('should prompt the user to install the dotnet runtime extension if trying to call it throws an error', async function () {
       const errMsg = 'dotnet.showAcquisitionLog command not found';
       const executeCommandStub = stub(commands, 'executeCommand').throws(errMsg);
-      const showErrorMessageStub = stub(window, 'showErrorMessage');
+      const showErrorMessageStub = stub(WindowUtilities, 'showError');
       const file = Uri.file(__filename);
 
       stubs.push(executeCommandStub, showErrorMessageStub);
@@ -568,13 +569,64 @@ suite('OOXMLValidator', function () {
         // eslint-disable-next-line max-len
         'The ".NET Install Tool for Extension Authors" VS Code extensionMUST be installed\nor the ooxml.dotNetPath must be set to th absolute path to the .Net Runtime\nfor the OOXML Validator extension to work.',
       );
-      expect(showErrorMessageStub.firstCall.lastArg).to.deep.eq({ modal: true });
+      expect(showErrorMessageStub.firstCall.lastArg).to.deep.eq(true);
+    });
+
+    test('should show warning if the path to the local dotnet runtime is invalid', function() {
+      const file = Uri.file(__filename);
+      const dotnetPath = join('road', 'to', 'nowhere');
+
+      const executeCommandStub = stub(commands, 'executeCommand').returns(Promise.resolve({dotnetPath}));
+      const isDotNetRuntimeStub = stub(ExtensionUtilities, 'isDotNetRuntime').returns(Promise.resolve(false));
+      const showWarningMessageStub = stub(WindowUtilities, 'showWarning');
+      const spawnSyncStub = stub(child_process, 'spawnSync').returns({
+        stdout: Buffer.from(JSON.stringify([])),
+        stderr: Buffer.from(''),
+        pid: 7,
+        output: [null],
+        status: 13,
+        signal: null,
+      });
+
+      stubs.push(executeCommandStub, isDotNetRuntimeStub, showWarningMessageStub, spawnSyncStub);
+
+      OOXMLValidator.validate(file).then(() => {
+        expect(showWarningMessageStub.firstCall.firstArg).to.eq('OOXML Validator: The .NET path set in the settings is not valid.');
+        // eslint-disable-next-line max-len
+        expect(showWarningMessageStub.firstCall.args[1]).to.eq('Using the .NET Install Tool for Extension Authors extension to acquire .NET Runtime.\nUpdate the ooxml.dotNetPath setting to the use a local runtime.');
+        expect(showWarningMessageStub.firstCall.args[2]).to.be.true;
+      });
+
+    });
+
+    test('should not show a warning if the path to the local dotnet runtime is valid', function() {
+      const file = Uri.file(__filename);
+      const dotnetPath = join('road', 'to', 'somewhere');
+
+      const executeCommandStub = stub(commands, 'executeCommand').returns(Promise.resolve({dotnetPath}));
+      const isDotNetRuntimeStub = stub(ExtensionUtilities, 'isDotNetRuntime').returns(Promise.resolve(true));
+      const showWarningMessageStub = stub(WindowUtilities, 'showWarning');
+      const spawnSyncStub = stub(child_process, 'spawnSync').returns({
+        stdout: Buffer.from(JSON.stringify([])),
+        stderr: Buffer.from(''),
+        pid: 7,
+        output: [null],
+        status: 13,
+        signal: null,
+      });
+
+      stubs.push(executeCommandStub, isDotNetRuntimeStub, showWarningMessageStub, spawnSyncStub);
+
+      OOXMLValidator.validate(file).then(() => {
+        expect(showWarningMessageStub.called).to.be.false;
+      });
+
     });
 
     test('should display an error if one is thrown', async function () {
       const errMsg = ['eek gads no tacos!!'];
       const executeCommandStub = stub(commands, 'executeCommand').throws(errMsg);
-      const showErrorMessageStub = stub(window, 'showErrorMessage');
+      const showErrorMessageStub = stub(WindowUtilities, 'showError');
       const file = Uri.file(__filename);
 
       stubs.push(executeCommandStub, showErrorMessageStub);
@@ -582,7 +634,8 @@ suite('OOXMLValidator', function () {
       await OOXMLValidator.validate(file);
 
       expect(showErrorMessageStub.firstCall.firstArg).to.deep.eq(errMsg);
-      expect(showErrorMessageStub.firstCall.lastArg).to.deep.eq({ modal: true });
+      expect(showErrorMessageStub.firstCall.lastArg).to.deep.eq(true);
     });
   });
 });
+
